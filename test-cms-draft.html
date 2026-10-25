@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sample CMS Blog Post Draft - Inkloom Brand Audit Demo</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #F1F5F9;
+      color: #1E293B;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+    .cms-container {
+      max-width: 780px;
+      margin: 0 auto;
+      background: #FFFFFF;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: #EEF2FF;
+      color: #4F46E5;
+      font-weight: 600;
+      font-size: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 12px;
+      color: #0F172A;
+    }
+    .editor-box {
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      min-height: 180px;
+      outline: none;
+      background: #FAFAFA;
+    }
+    .editor-box:focus {
+      border-color: #4F46E5;
+      background: #FFFFFF;
+    }
+    .image-preview {
+      margin: 20px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #E2E8F0;
+      max-width: 400px;
+    }
+    .image-preview img {
+      width: 100%;
+      display: block;
+    }
+    .hint {
+      font-size: 13px;
+      color: #64748B;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="cms-container">
+    <div class="badge">CMS Editor Preview (WordPress / Webflow)</div>
+    <h1>Launching Our Next Generation Enterprise Cloud</h1>
+    <p><em>Author: Marketing Operations Team | Status: Draft</em></p>
+    
+    <div class="hint">
+      <strong>Instructions:</strong> Open the Inkloom AI Chrome Extension popup on this tab and click <strong>"Audit Active Tab"</strong>. 
+      Notice how it detects the outdated pricing claim ($29/mo) and banned superlative ("magic AI"), and lets you 1-click apply the fix directly into the editable field below!
+    </div>
+
+    <!-- Live Editable Field for Testing 1-Click Rewrites -->
+    <div class="editor-box" contenteditable="true" id="liveEditor">
+      We are thrilled to announce the general availability of our new platform! 
+      
+      Get started today with our starter tier for only $29/mo to unlock unlimited workflow automation. 
+      Our system is powered by magic AI that delivers 100% bug free copy for every enterprise team without fail.
+      
+      Join thousands of marketing teams scaling their brand presence today.
+    </div>
+
+    <div class="image-preview">
+      <!-- Sample image for OpenCV dominant color extraction -->
+      <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500" alt="Sample Brand Banner">
+    </div>
+  </div>
+</body>
+</html>

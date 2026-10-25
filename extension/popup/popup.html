@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inkloom AI - Brand Governance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="inkloom-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand-title-group">
+        <div class="brand-logo-icon">
+          <span class="logo-dot"></span>
+        </div>
+        <div>
+          <h1 class="brand-name">Inkloom <span class="gradient-text">AI</span></h1>
+          <p class="brand-tagline">Brand Governance Platform</p>
+        </div>
+      </div>
+      <div class="api-status-pill" id="apiStatusPill" title="FastAPI Backend Status">
+        <span class="status-indicator" id="statusDot"></span>
+        <span class="status-label" id="statusText">Checking...</span>
+      </div>
+    </header>
+
+    <!-- Main Trigger Bar -->
+    <section class="action-section">
+      <button class="primary-scan-btn" id="scanBtn">
+        <svg class="scan-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <span id="scanBtnText">Audit Active Tab</span>
+      </button>
+      <button class="secondary-btn" id="demoSampleBtn" title="Load sample CMS draft to test">
+        Load Sample
+      </button>
+    </section>
+
+    <!-- Score & Summary Card -->
+    <section class="score-card" id="scoreCard" style="display: none;">
+      <div class="score-header">
+        <div class="score-radial">
+          <span class="score-number" id="scoreValue">100</span>
+          <span class="score-unit">/100</span>
+        </div>
+        <div class="score-meta">
+          <div class="compliance-badge" id="complianceBadge">Compliant</div>
+          <p class="score-summary" id="scoreSummary">All claims and visual assets align with brand guidelines.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab Navigation -->
+    <div class="tabs-nav" id="tabsNav" style="display: none;">
+      <button class="tab-btn active" data-tab="text">
+        Copy & Claims <span class="tab-count" id="textIssueCount">0</span>
+      </button>
+      <button class="tab-btn" data-tab="vision">
+        Visual Palette <span class="tab-count" id="visionIssueCount">0</span>
+      </button>
+    </div>
+
+    <!-- Tab Contents -->
+    <main class="tab-content-area" id="tabContentArea">
+      <!-- Empty Initial State -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon-wrap">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+        </div>
+        <h3>Ready for In-Context Governance</h3>
+        <p>Click "Audit Active Tab" to verify draft copy against Golden Facts and inspect image colors with OpenCV.</p>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-state" id="loadingState" style="display: none;">
+        <div class="pulsing-spinner"></div>
+        <p>Executing dual-engine evaluation...</p>
+        <span class="loading-sub">Sampling OpenCV pixel matrices & RAG claims</span>
+      </div>
+
+      <!-- Text Evaluation Tab -->
+      <div class="tab-pane active" id="textTab" style="display: none;">
+        <div class="issues-list" id="textIssuesList"></div>
+      </div>
+
+      <!-- Vision Evaluation Tab -->
+      <div class="tab-pane" id="visionTab" style="display: none;">
+        <div class="vision-grid" id="visionIssuesList"></div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <span>Split Vision: OpenCV + Gemini RAG</span>
+      <span class="footer-version">v1.0 MVP</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
