@@ -86,4 +86,5 @@ def test_reviews_escalation():
 
     get_res = client.get("/api/reviews")
     assert get_res.status_code == 200
-    assert len(get_res.json()["reviews"]) >= 3
+    escalated_id = res.json()["review"]["id"]
+    assert any(r["id"] == escalated_id for r in get_res.json()["reviews"])
