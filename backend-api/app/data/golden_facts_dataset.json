@@ -1,0 +1,143 @@
+[
+  {
+    "id": "GF-PRICE-001",
+    "category": "pricing_matrix",
+    "title": "Inkloom AI SaaS Pricing Tiers & Subscription Matrix",
+    "citation": "Golden Facts: Pricing Matrix v2.4 (Effective 2026), Section 1",
+    "content": "Official Subscription Pricing Tiers for 2026: 1. Free Community Edition: $0/month, supports up to 3 editors, deterministic OpenCV color checks, and community forum support. 2. Professional Starter Tier: $49/month billed monthly, or $39/month billed annually. Includes up to 15 editors, real-time Chrome Extension CMS integration, full RAG Golden Facts validation, and 500 audit calls/day. (CRITICAL DEPRECATION NOTICE: The legacy $29/mo tier was discontinued in Q3 2024. Any reference to $29/month or $29 starter tier is strictly outdated and non-compliant). 3. Enterprise Tier: Custom pricing starting at $499/month, includes unlimited editors, SOC2 Type II compliance, VPC isolation, dedicated SLA (99.95%), custom brand swatch embeddings, and priority engineering support. Non-existent pricing plans like $19/mo, $25/mo, or $29/mo are obsolete.",
+    "key_rules": [
+      {
+        "pattern": "\\$29(\\/(mo|month))?|29\\s?dollars?",
+        "issue": "Outdated pricing claim. Starter tier was updated from legacy $29/mo to $49/mo in Q3 2024.",
+        "rewrite": "$49/month (or $39/mo billed annually)",
+        "severity": "high"
+      },
+      {
+        "pattern": "\\$19(\\/(mo|month))?|19\\s?dollars?",
+        "issue": "Non-existent pricing plan cited. Community edition is Free ($0), Starter is $49/mo.",
+        "rewrite": "free Community tier or $49/mo Starter tier",
+        "severity": "high"
+      },
+      {
+        "pattern": "\\$25(\\/(mo|month))?|25\\s?dollars?",
+        "issue": "Non-existent pricing plan cited. Official Starter tier is $49/month ($39/mo billed annually).",
+        "rewrite": "$49/month ($39/mo billed annually)",
+        "severity": "high"
+      }
+    ],
+    "metadata": {
+      "version": "2.4",
+      "effective_year": 2026,
+      "tags": ["pricing", "tiers", "starter", "community", "enterprise", "cost", "billing", "subscription"]
+    }
+  },
+  {
+    "id": "GF-TONE-001",
+    "category": "brand_voice_and_tone",
+    "title": "Banned Terminology, Risk Policy & Superlatives",
+    "citation": "Brand Style Guide: Banned Terminology & Risk Policy 2026, Section 3",
+    "content": "Inkloom AI brand voice is authoritative, transparent, explainable, and grounded in engineering rigor. We strictly prohibit deceptive AI hype and unprovable absolutes: 1. 'magic AI' or 'black-box magic': Banned. Replace with 'high-confidence AI assistance' or 'deterministic and explainable governance'. 2. 'cheapest': Disallowed superlative. Replace with 'most cost-effective enterprise solution'. 3. 'flawless': Disallowed absolute. Replace with 'rigorous and consistent' or 'enterprise-grade accuracy'. 4. '100% bug free' or '100% compliant guarantee': Strictly banned compliance liability. Replace with 'extensively tested and highly reliable' or 'statistically validated brand alignment'. 5. 'zero risk guaranteed': Banned claim. Replace with 'comprehensive risk mitigation'. 6. 'replaces all human reviewers': Inaccurate. Inkloom is designed as human-in-the-loop co-pilot, not autonomous replacement.",
+    "key_rules": [
+      {
+        "pattern": "magic\\s+ai",
+        "issue": "Banned term 'magic AI'. Inkloom relies on deterministic OpenCV rules and explainable LLMs, not black-box magic.",
+        "rewrite": "high-confidence AI assistance",
+        "severity": "warning"
+      },
+      {
+        "pattern": "cheapest",
+        "issue": "Disallowed superlative 'cheapest'. Violates enterprise brand voice standards.",
+        "rewrite": "most cost-effective enterprise solution",
+        "severity": "warning"
+      },
+      {
+        "pattern": "flawless",
+        "issue": "Disallowed claim 'flawless'. Avoid absolute quality guarantees.",
+        "rewrite": "rigorous and consistent",
+        "severity": "warning"
+      },
+      {
+        "pattern": "100%\\s+bug\\s+free",
+        "issue": "Disallowed compliance guarantee '100% bug free'. Legal risk for unprovable absolutes.",
+        "rewrite": "extensively tested and highly reliable",
+        "severity": "high"
+      },
+      {
+        "pattern": "zero\\s+risk(\\s+guaranteed)?",
+        "issue": "Disallowed absolute 'zero risk guaranteed'. Violates brand governance legal policy.",
+        "rewrite": "comprehensive risk mitigation",
+        "severity": "warning"
+      },
+      {
+        "pattern": "replaces?\\s+(all\\s+)?human\\s+reviewers?",
+        "issue": "Misleading positioning. Inkloom empowers creators and accelerates reviews; it does not eliminate human review.",
+        "rewrite": "streamlines human review and sign-off",
+        "severity": "warning"
+      }
+    ],
+    "metadata": {
+      "version": "3.1",
+      "effective_year": 2026,
+      "tags": ["tone", "superlatives", "brand voice", "banned words", "legal", "claims", "magic ai", "flawless"]
+    }
+  },
+  {
+    "id": "GF-SLOGAN-001",
+    "category": "taglines_and_slogans",
+    "title": "Official Brand Taglines, Slogans & Value Propositions",
+    "citation": "Brand Style Guide: Official Taglines v2.4, Section 2",
+    "content": "Official Approved Slogans & Taglines for Inkloom AI: 1. Primary Corporate Slogan: 'Velocity with Precision'. (CRITICAL: Do NOT alter to 'Velocity without precision', 'Speed over accuracy', or 'Velocity without control'). 2. Secondary Tagline: 'Explainable Brand Governance for Modern Creators'. 3. Value Proposition: 'Audit text claims and visual assets in real time right inside your CMS.' 4. Boilerplate Description: 'Inkloom AI is the hybrid brand governance platform that combines deterministic OpenCV pixel extraction with RAG-grounded LLM verification to eliminate brand drift across distributed teams.'",
+    "key_rules": [
+      {
+        "pattern": "velocity\\s+without\\s+(precision|control|limits)",
+        "issue": "Distorted brand slogan. Approved corporate tagline is 'Velocity with Precision'.",
+        "rewrite": "Velocity with Precision",
+        "severity": "info"
+      },
+      {
+        "pattern": "speed\\s+over\\s+(quality|accuracy|precision)",
+        "issue": "Contradicts core brand value proposition. We champion precision alongside velocity.",
+        "rewrite": "Velocity with Precision",
+        "severity": "info"
+      }
+    ],
+    "metadata": {
+      "version": "2.4",
+      "effective_year": 2026,
+      "tags": ["slogan", "tagline", "motto", "branding", "velocity with precision", "value proposition"]
+    }
+  },
+  {
+    "id": "GF-SEC-001",
+    "category": "security_and_privacy",
+    "title": "Data Privacy, Security Architecture & Customer Data Protection",
+    "citation": "Security & Trust Whitepaper: Data Protection Architecture 2026, Section 4",
+    "content": "Security, Compliance & Data Privacy Architecture: 1. Zero Model Training Policy: Inkloom AI strictly enforces zero LLM model training or fine-tuning on customer DOM content, draft copy, or uploaded assets. 2. Ephemeral Processing: Draft text and image assets inspected by the Chrome Extension or API are evaluated transiently in-memory and immediately discarded unless explicitly escalated to the human review queue. 3. Infrastructure: All API microservices are hosted on enterprise Google Cloud Platform (GCP) with TLS 1.3 in-transit and AES-256 at-rest encryption. 4. Certifications: Enterprise Tier supports SOC2 Type II compliance, VPC peering, and custom data processing agreements (DPA). Any claim stating customer content is saved for public training or stored insecurely is false.",
+    "key_rules": [
+      {
+        "pattern": "(saves|stores|trains?)\\s+(on\\s+)?(all\\s+)?customer\\s+data",
+        "issue": "Incorrect security claim. Inkloom AI enforces zero model-training and transient data handling.",
+        "rewrite": "processes content transiently with a strict zero-model-training guarantee",
+        "severity": "high"
+      }
+    ],
+    "metadata": {
+      "version": "2.1",
+      "effective_year": 2026,
+      "tags": ["security", "privacy", "soc2", "model training", "encryption", "google cloud", "compliance"]
+    }
+  },
+  {
+    "id": "GF-CAP-001",
+    "category": "product_capabilities",
+    "title": "Platform Capabilities, Split Vision Engine & CMS Integrations",
+    "citation": "Product Architecture Spec: Split Vision Engine v2.0, Section 5",
+    "content": "Core Platform Architecture & Specifications: 1. Split Vision Engine: Combines deterministic OpenCV pixel matrix sampling (K-means k=3, Delta E Euclidean color distance against approved brand palette) executing in <5ms with zero LLM hallucination, paired with Gemini Vision for qualitative tone and vibe checks. 2. Brand Palette Standards: Primary Inkloom Indigo (#4F46E5), Secondary Cyan (#06B6D4), Neutral Dark Slate (#0F172A). Maximum acceptable color tolerance Delta E is 38.0. 3. In-Context Chrome Extension: Manifest V3 extension operating across rich CMS editors including WordPress (Gutenberg), Webflow, Medium, Canva, and LinkedIn. Injects inline visual highlight badges and provides 1-click in-place prescriptive rewrites. 4. Review Escalation Queue: Allows creators to escalate borderline flags directly to brand managers via the unified dashboard.",
+    "key_rules": [],
+    "metadata": {
+      "version": "2.0",
+      "effective_year": 2026,
+      "tags": ["capabilities", "opencv", "split vision", "color distance", "delta e", "cms", "chrome extension"]
+    }
+  }
+]

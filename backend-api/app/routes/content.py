@@ -1,8 +1,22 @@
 """Content check route for Chrome Extension and CMS integration."""
 import asyncio
-from fastapi import APIRouter
-from app.models.schemas import ContentCheckRequest, ContentCheckResponse
-from app.services.text_rag import evaluate_text_compliance
+from typing import Optional
+from fastapi import APIRouter, Query
+from app.models.schemas import (
+    ContentCheckRequest,
+    ContentCheckResponse,
+    GoldenFactsListResponse,
+    GoldenFactItem,
+    GoldenFactSearchRequest,
+    GoldenFactSearchResponse,
+    GoldenFactSearchResult
+)
+from app.services.text_rag import (
+    evaluate_text_compliance,
+    retrieve_relevant_facts,
+    get_all_golden_facts
+)
+from app.services.vector_store import get_vector_store
 from app.services.vision_check import evaluate_images_compliance
 
 router = APIRouter(prefix="/api")
@@ -119,3 +133,59 @@ async def escalate_review(payload: dict):
 async def get_reviews():
     """Returns all pending escalated drafts for the Admin Dashboard."""
     return {"reviews": ESCALATED_REVIEWS}
+
+
+@router.get("/golden-facts", response_model=GoldenFactsListResponse)
+async def list_golden_facts(category: Optional[str] = Query(default=None, description="Filter by category")):
+    """Returns all indexed Golden Facts in the knowledge base."""
+    docs = get_all_golden_facts()
+    if category:
+        docs = [d for d in docs if d.category.lower() == category.lower()]
+
+    categories = sorted(list({d.category for d in docs}))
+    facts = [
+        GoldenFactItem(
+            id=d.id,
+            category=d.category,
+            title=d.title,
+            citation=d.citation,
+            content=d.content,
+            metadata=d.metadata
+        )
+        for d in docs
+    ]
+    return GoldenFactsListResponse(
+        total=len(facts),
+        categories=categories,
+        facts=facts
+    )
+
+
+@router.post("/golden-facts/search", response_model=GoldenFactSearchResponse)
+async def search_golden_facts(payload: GoldenFactSearchRequest):
+    """
+    Semantic vector search across indexed Golden Facts.
+    Retrieves the top-k most relevant facts using cosine similarity.
+    """
+    store = get_vector_store()
+    results = store.search(payload.query, top_k=payload.top_k)
+
+    search_items = [
+        GoldenFactSearchResult(
+            id=doc.id,
+            category=doc.category,
+            title=doc.title,
+            citation=doc.citation,
+            content=doc.content,
+            similarity_score=round(score, 4)
+        )
+        for doc, score in results
+    ]
+
+    return GoldenFactSearchResponse(
+        query=payload.query,
+        provider=store.provider_name,
+        results_count=len(search_items),
+        results=search_items
+    )
+

@@ -76,3 +76,45 @@ class HealthResponse(BaseModel):
     version: str
     gemini_configured: bool
     environment: str
+
+
+class GoldenFactItem(BaseModel):
+    """Structured Golden Fact entry from knowledge base."""
+    id: str
+    category: str
+    title: str
+    citation: str
+    content: str
+    metadata: Optional[dict] = Field(default_factory=dict)
+
+
+class GoldenFactsListResponse(BaseModel):
+    """Response containing all loaded Golden Facts."""
+    total: int
+    categories: List[str]
+    facts: List[GoldenFactItem]
+
+
+class GoldenFactSearchRequest(BaseModel):
+    """Request payload to query the Vector Knowledge Base."""
+    query: str = Field(description="Search text or claim to retrieve Golden Facts for.")
+    top_k: int = Field(default=3, ge=1, le=10, description="Number of relevant documents to retrieve.")
+
+
+class GoldenFactSearchResult(BaseModel):
+    """Individual vector search match with similarity score."""
+    id: str
+    category: str
+    title: str
+    citation: str
+    content: str
+    similarity_score: float = Field(description="Cosine similarity score (0.0 to 1.0).")
+
+
+class GoldenFactSearchResponse(BaseModel):
+    """Response payload for semantic vector search."""
+    query: str
+    provider: str
+    results_count: int
+    results: List[GoldenFactSearchResult]
+
