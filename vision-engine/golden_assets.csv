@@ -1,0 +1,6 @@
+﻿asset_type,asset_id,name,hex_code,role,tolerance_de00,min_width_px,min_height_px,clear_space_ratio,template_path,description
+color,inkloom_primary,Inkloom Indigo,#4F46E5,primary,3.5,,,,,"Primary hero and brand action color"
+color,inkloom_purple,Electric Violet,#7C3AED,secondary,4.0,,,,,"Accent highlights and secondary buttons"
+color,inkloom_cyan,Cyan Signal,#06B6D4,accent,4.5,,,,,"Compliance badges and data visualization"
+color,inkloom_slate,Deep Slate,#0F172A,background,3.0,,,,,"Dark canvas background"
+logo,inkloom_master_logo,Inkloom Master Logo,,,24,60,24,0.35,assets/logos/inkloom_mark.png,
