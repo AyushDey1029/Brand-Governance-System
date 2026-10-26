@@ -1,4 +1,4 @@
-"""FastAPI Application Entry Point for Inkloom AI Brand Governance Platform.
+﻿"""FastAPI Application Entry Point for Inkloom AI Brand Governance Platform.
 
 Unified server: hosts the asynchronous evaluation microservice (OpenCV + RAG)
 and serves the React Admin Dashboard SPA seamlessly from a single process.
@@ -36,6 +36,17 @@ app.add_middleware(
 
 # Register API routes FIRST so they take precedence over static files
 app.include_router(api_router)
+
+# Status endpoint is always available
+@app.get("/api-status")
+async def api_info():
+    return {
+        "message": "Inkloom AI Unified Server is online",
+        "docs": "/docs",
+        "health": "/health",
+        "dashboard": "/",
+        "check_endpoint": "/api/check-content"
+    }
 
 # Locate compiled React Admin Dashboard
 DIST_DIR = os.path.abspath(

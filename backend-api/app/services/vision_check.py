@@ -1,11 +1,13 @@
-"""OpenCV Deterministic Vision Service for Inkloom AI.
+﻿"""OpenCV Deterministic Vision Service for Inkloom AI.
 
 Extracts dominant hex color from images (URLs or base64 data) and evaluates compliance
-against approved brand palettes using exact mathematical matrix sampling.
+against approved brand palettes using exact mathematical matrix sampling and
+perceptual CIEDE2000 (Delta E 00) color difference.
 """
 import base64
 import logging
-from typing import List, Tuple, Optional
+import math
+from typing import List, Tuple, Optional, Union
 import cv2
 import numpy as np
 import httpx
@@ -26,7 +28,28 @@ def hex_to_rgb(hex_code: str) -> Tuple[int, int, int]:
 
 def rgb_to_hex(r: int, g: int, b: int) -> str:
     """Convert RGB integers to formatted hex string."""
-    return f"#{int(r):02X}{int(g):02X}{int(b):02X}"
+    r_c = max(0, min(255, int(round(r))))
+    g_c = max(0, min(255, int(round(g))))
+    b_c = max(0, min(255, int(round(b))))
+    return f"#{r_c:02X}{g_c:02X}{b_c:02X}"
+
+
+def rgb_to_lab(r: int, g: int, b: int) -> Tuple[float, float, float]:
+    """Convert sRGB integer tuple [0..255] to standard CIE L*a*b* coordinates.
+    
+    Uses standard D65 illuminant via OpenCV with floating point precision.
+    Returns:
+        (L, a, b) where L in [0, 100], a in [-128, 127], b in [-128, 127].
+    """
+    rgb_f = np.array([[[r, g, b]]], dtype=np.float32) / 255.0
+    lab = cv2.cvtColor(rgb_f, cv2.COLOR_RGB2LAB)[0, 0]
+    return float(lab[0]), float(lab[1]), float(lab[2])
+
+
+def hex_to_lab(hex_code: str) -> Tuple[float, float, float]:
+    """Convert hex color string directly to CIE L*a*b* coordinates."""
+    r, g, b = hex_to_rgb(hex_code)
+    return rgb_to_lab(r, g, b)
 
 
 def color_distance_rgb(c1: Tuple[int, int, int], c2: Tuple[int, int, int]) -> float:
@@ -34,36 +57,146 @@ def color_distance_rgb(c1: Tuple[int, int, int], c2: Tuple[int, int, int]) -> fl
     return float(np.sqrt(sum((a - b) ** 2 for a, b in zip(c1, c2))))
 
 
-def extract_dominant_color_from_bytes(image_bytes: bytes, k: int = 3) -> Tuple[str, Tuple[int, int, int]]:
+def delta_e_cie2000(
+    lab1: Tuple[float, float, float],
+    lab2: Tuple[float, float, float],
+    k_l: float = 1.0,
+    k_c: float = 1.0,
+    k_h: float = 1.0
+) -> float:
+    """Calculate the CIEDE2000 color difference between two CIELAB colors.
+    
+    Formula compliant with CIE Publication 142-2001 and ISO/CIE 11664-6:2014.
+    """
+    l1, a1, b1 = lab1
+    l2, a2, b2 = lab2
+
+    c1 = math.sqrt(a1 ** 2 + b1 ** 2)
+    c2 = math.sqrt(a2 ** 2 + b2 ** 2)
+    c_bar = (c1 + c2) / 2.0
+
+    c_bar_7 = c_bar ** 7
+    twenty_five_7 = 25.0 ** 7
+    g = 0.5 * (1.0 - math.sqrt(c_bar_7 / (c_bar_7 + twenty_five_7)))
+
+    a1_prime = (1.0 + g) * a1
+    a2_prime = (1.0 + g) * a2
+
+    c1_prime = math.sqrt(a1_prime ** 2 + b1 ** 2)
+    c2_prime = math.sqrt(a2_prime ** 2 + b2 ** 2)
+
+    h1_prime = math.degrees(math.atan2(b1, a1_prime)) % 360.0
+    h2_prime = math.degrees(math.atan2(b2, a2_prime)) % 360.0
+
+    delta_l_prime = l2 - l1
+    delta_c_prime = c2_prime - c1_prime
+
+    if c1_prime * c2_prime == 0.0:
+        delta_h_prime = 0.0
+    else:
+        diff_h = h2_prime - h1_prime
+        if abs(diff_h) <= 180.0:
+            delta_h_prime = diff_h
+        elif diff_h > 180.0:
+            delta_h_prime = diff_h - 360.0
+        else:
+            delta_h_prime = diff_h + 360.0
+
+    delta_big_h_prime = 2.0 * math.sqrt(c1_prime * c2_prime) * math.sin(math.radians(delta_h_prime / 2.0))
+
+    l_bar_prime = (l1 + l2) / 2.0
+    c_bar_prime = (c1_prime + c2_prime) / 2.0
+
+    if c1_prime * c2_prime == 0.0:
+        h_bar_prime = h1_prime + h2_prime
+    else:
+        diff_abs = abs(h1_prime - h2_prime)
+        if diff_abs <= 180.0:
+            h_bar_prime = (h1_prime + h2_prime) / 2.0
+        elif (h1_prime + h2_prime) < 360.0:
+            h_bar_prime = (h1_prime + h2_prime + 360.0) / 2.0
+        else:
+            h_bar_prime = (h1_prime + h2_prime - 360.0) / 2.0
+
+    t = (
+        1.0
+        - 0.17 * math.cos(math.radians(h_bar_prime - 30.0))
+        + 0.24 * math.cos(math.radians(2.0 * h_bar_prime))
+        + 0.32 * math.cos(math.radians(3.0 * h_bar_prime + 6.0))
+        - 0.20 * math.cos(math.radians(4.0 * h_bar_prime - 63.0))
+    )
+
+    delta_theta = 30.0 * math.exp(-(((h_bar_prime - 275.0) / 25.0) ** 2))
+    
+    c_bar_prime_7 = c_bar_prime ** 7
+    r_c = 2.0 * math.sqrt(c_bar_prime_7 / (c_bar_prime_7 + twenty_five_7))
+
+    l_diff_sq = (l_bar_prime - 50.0) ** 2
+    s_l = 1.0 + (0.015 * l_diff_sq) / math.sqrt(20.0 + l_diff_sq)
+    s_c = 1.0 + 0.045 * c_bar_prime
+    s_h = 1.0 + 0.015 * c_bar_prime * t
+
+    r_t = -math.sin(math.radians(2.0 * delta_theta)) * r_c
+
+    term_l = delta_l_prime / (k_l * s_l)
+    term_c = delta_c_prime / (k_c * s_c)
+    term_h = delta_big_h_prime / (k_h * s_h)
+
+    de2000_sq = (term_l ** 2) + (term_c ** 2) + (term_h ** 2) + (r_t * term_c * term_h)
+    return float(math.sqrt(max(0.0, de2000_sq)))
+
+
+def color_distance_ciede2000(c1: Tuple[int, int, int], c2: Tuple[int, int, int]) -> float:
+    """Calculate CIEDE2000 (Delta E 00) perceptual color distance between RGB tuples."""
+    lab1 = rgb_to_lab(*c1)
+    lab2 = rgb_to_lab(*c2)
+    return delta_e_cie2000(lab1, lab2)
+
+
+def extract_dominant_color_from_bytes(image_bytes: bytes, k: int = 4) -> Tuple[str, Tuple[int, int, int]]:
     """Decodes image bytes and computes the dominant non-background color using OpenCV k-means."""
     np_arr = np.frombuffer(image_bytes, np.uint8)
-    img_bgr = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    img_bgr = cv2.imdecode(np_arr, cv2.IMREAD_UNCHANGED)
 
     if img_bgr is None:
         raise ValueError("Could not decode image bytes with OpenCV")
 
     # Downscale for sub-millisecond execution
     h, w = img_bgr.shape[:2]
-    max_dim = 120
+    max_dim = 140
     if max(h, w) > max_dim:
         scale = max_dim / float(max(h, w))
         img_bgr = cv2.resize(img_bgr, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
 
-    # Convert BGR to RGB
-    img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-    pixels = img_rgb.reshape(-1, 3).astype(np.float32)
+    # Handle transparency channel if present
+    if len(img_bgr.shape) == 3 and img_bgr.shape[2] == 4:
+        alpha = img_bgr[:, :, 3]
+        bgr = img_bgr[:, :, :3]
+        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+        pixels = rgb[alpha > 25].astype(np.float32)
+    else:
+        if len(img_bgr.shape) == 2:
+            rgb = cv2.cvtColor(img_bgr, cv2.COLOR_GRAY2RGB)
+        else:
+            rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+        pixels = rgb.reshape(-1, 3).astype(np.float32)
+
+    if len(pixels) == 0:
+        return "#000000", (0, 0, 0)
 
     # Filter out near-white and near-black background pixels if sufficient foreground exists
-    foreground_mask = ~((pixels[:, 0] > 240) & (pixels[:, 1] > 240) & (pixels[:, 2] > 240)) & \
-                      ~((pixels[:, 0] < 20) & (pixels[:, 1] < 20) & (pixels[:, 2] < 20))
+    foreground_mask = ~(
+        (pixels[:, 0] > 242) & (pixels[:, 1] > 242) & (pixels[:, 2] > 242)
+    ) & ~(
+        (pixels[:, 0] < 18) & (pixels[:, 1] < 18) & (pixels[:, 2] < 18)
+    )
     
     active_pixels = pixels[foreground_mask]
-    if len(active_pixels) < 20:
-        # Image is mostly solid or monochrome
+    if len(active_pixels) < 25:
         active_pixels = pixels
 
     # OpenCV K-Means Clustering
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 12, 0.8)
     num_clusters = min(k, len(active_pixels))
     if num_clusters < 1:
         num_clusters = 1
@@ -81,7 +214,9 @@ def extract_dominant_color_from_bytes(image_bytes: bytes, k: int = 3) -> Tuple[s
     counts = np.bincount(labels.flatten())
     dominant_center = centers[np.argmax(counts)]
 
-    r, g, b = int(dominant_center[0]), int(dominant_center[1]), int(dominant_center[2])
+    r = int(round(dominant_center[0]))
+    g = int(round(dominant_center[1]))
+    b = int(round(dominant_center[2]))
     dominant_hex = rgb_to_hex(r, g, b)
     return dominant_hex, (r, g, b)
 
@@ -90,7 +225,6 @@ async def fetch_image_bytes(image_url: str) -> Optional[bytes]:
     """Retrieves image bytes from either HTTP(S) URL or base64 data URI."""
     try:
         if image_url.startswith("data:image"):
-            # Parse data URI: data:image/png;base64,....
             header, base64_data = image_url.split(",", 1)
             return base64.b64decode(base64_data)
         
@@ -105,10 +239,15 @@ async def fetch_image_bytes(image_url: str) -> Optional[bytes]:
         return None
 
 
-async def evaluate_single_image(image_url: str) -> VisionCheckResult:
-    """Extracts dominant color from an image and compares against brand palette."""
+async def evaluate_single_image(
+    image_url: str,
+    target_brand_hex: Optional[str] = None,
+    tolerance: Optional[float] = None,
+    method: str = "ciede2000"
+) -> VisionCheckResult:
+    """Extracts dominant color from an image and evaluates compliance against brand palette."""
     settings = get_settings()
-    target_hex = settings.brand_primary_hex
+    target_hex = target_brand_hex or settings.brand_primary_hex
     target_rgb = hex_to_rgb(target_hex)
 
     image_bytes = await fetch_image_bytes(image_url)
@@ -125,28 +264,40 @@ async def evaluate_single_image(image_url: str) -> VisionCheckResult:
 
     try:
         dominant_hex, dominant_rgb = extract_dominant_color_from_bytes(image_bytes)
-        distance = color_distance_rgb(dominant_rgb, target_rgb)
-        tolerance = settings.color_tolerance
 
-        if distance <= tolerance:
+        # Calculate color difference
+        if method == "rgb_euclidean" or (tolerance is not None and tolerance > 15.0):
+            distance = color_distance_rgb(dominant_rgb, target_rgb)
+            tol = tolerance if tolerance is not None else settings.color_tolerance
+            is_match = distance <= tol
+            is_warn = distance <= tol * 1.6
+        else:
+            distance = color_distance_ciede2000(dominant_rgb, target_rgb)
+            tol = tolerance if tolerance is not None else 3.5
+            is_match = distance <= tol
+            is_warn = distance <= tol * 1.8
+
+        distance = round(distance, 2)
+
+        if is_match:
             return VisionCheckResult(
                 image_url=image_url,
                 dominant_hex=dominant_hex,
                 target_brand_hex=target_hex,
                 match=True,
-                color_distance=round(distance, 2),
+                color_distance=distance,
                 status="compliant",
                 message=f"Dominant color {dominant_hex} precisely aligns with brand palette {target_hex}."
             )
-        elif distance <= tolerance * 1.6:
+        elif is_warn:
             return VisionCheckResult(
                 image_url=image_url,
                 dominant_hex=dominant_hex,
                 target_brand_hex=target_hex,
                 match=False,
-                color_distance=round(distance, 2),
+                color_distance=distance,
                 status="warning",
-                message=f"Dominant color {dominant_hex} shows minor palette deviation from {target_hex} (Distance: {distance:.1f})."
+                message=f"Dominant color {dominant_hex} shows minor palette deviation from {target_hex} (Distance: {distance})."
             )
         else:
             return VisionCheckResult(
@@ -154,7 +305,7 @@ async def evaluate_single_image(image_url: str) -> VisionCheckResult:
                 dominant_hex=dominant_hex,
                 target_brand_hex=target_hex,
                 match=False,
-                color_distance=round(distance, 2),
+                color_distance=distance,
                 status="violation",
                 message=f"Off-brand color detected: {dominant_hex}. Approved primary brand color is {target_hex}."
             )
@@ -172,15 +323,32 @@ async def evaluate_single_image(image_url: str) -> VisionCheckResult:
         )
 
 
-async def evaluate_images_compliance(image_urls: List[str]) -> List[VisionCheckResult]:
-    """Runs concurrent OpenCV color evaluation across multiple images."""
+async def eval_visual_compliance(
+    image_urls: List[str],
+    target_brand_hex: str = "#4F46E5",
+    tolerance: float = 3.5,
+    method: str = "ciede2000"
+) -> List[VisionCheckResult]:
+    """Contract compliance method for Abhyudai Sood's vision engine deliverable.
+    
+    Evaluates visual compliance across a list of images against a specified target brand hex.
+    """
     if not image_urls:
         return []
 
-    # Limit to first 5 images per request to keep response snappy
     targets = image_urls[:5]
     results: List[VisionCheckResult] = []
     for url in targets:
-        result = await evaluate_single_image(url)
-        results.append(result)
+        res = await evaluate_single_image(
+            url,
+            target_brand_hex=target_brand_hex,
+            tolerance=tolerance,
+            method=method
+        )
+        results.append(res)
     return results
+
+
+async def evaluate_images_compliance(image_urls: List[str]) -> List[VisionCheckResult]:
+    """Runs concurrent OpenCV color evaluation across multiple images using application settings."""
+    return await eval_visual_compliance(image_urls)
