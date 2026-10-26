@@ -1,7 +1,7 @@
 """Application Configuration Settings."""
 import os
 from functools import lru_cache
-from typing import List
+from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,6 +18,16 @@ class Settings(BaseSettings):
     # Gemini AI
     gemini_api_key: str = ""
     gemini_model_text: str = "gemini-1.5-flash"
+    gemini_embedding_model: str = "text-embedding-004"
+    
+    # Vector Database & RAG Configuration
+    vector_db_provider: str = "in_memory"  # Options: "in_memory", "qdrant", "pinecone"
+    qdrant_url: Optional[str] = None
+    qdrant_api_key: Optional[str] = None
+    qdrant_collection: str = "inkloom_golden_facts"
+    pinecone_api_key: Optional[str] = None
+    pinecone_index_name: str = "inkloom-golden-facts"
+    rag_top_k: int = 3
     
     # Supabase Database (Optional - falls back to local memory if unset)
     supabase_url: str = ""

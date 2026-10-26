@@ -67,15 +67,6 @@ if os.path.exists(DIST_DIR) and os.path.isfile(os.path.join(DIST_DIR, "index.htm
         """Serve the React Admin Dashboard at the root URL."""
         return FileResponse(os.path.join(DIST_DIR, "index.html"))
 
-    @app.get("/api-status")
-    async def api_info():
-        return {
-            "message": "Inkloom AI Unified Server is online",
-            "docs": "/docs",
-            "health": "/health",
-            "dashboard": "/",
-            "check_endpoint": "/api/check-content"
-        }
 else:
     @app.get("/")
     async def root_fallback():
@@ -86,6 +77,17 @@ else:
             "check_endpoint": "/api/check-content",
             "note": "React Admin Dashboard not built. Run 'npm run build' inside admin-dashboard/"
         }
+
+
+@app.get("/api-status")
+async def api_info():
+    return {
+        "message": "Inkloom AI Unified Server is online",
+        "docs": "/docs",
+        "health": "/health",
+        "dashboard": "/",
+        "check_endpoint": "/api/check-content"
+    }
 
 
 if __name__ == "__main__":
