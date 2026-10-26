@@ -98,24 +98,52 @@ ESCALATED_REVIEWS = [
 ]
 
 
+from app.services.supabase_service import fetch_review_queue, insert_review_ticket, update_review_ticket_status
+
+
 @router.post("/reviews/escalate")
 async def escalate_review(payload: dict):
-    """Escalates a flagged CMS draft claim to the Admin Dashboard Review Queue."""
+    """Escalates a flagged CMS draft claim to the Admin Dashboard Review Queue (Supabase or memory)."""
+    import random
+    ticket_id = payload.get("id") or f"REV-{random.randint(110, 999)}"
     review_item = {
-        "id": f"REV-{len(ESCALATED_REVIEWS) + 106}",
+        "id": ticket_id,
         "cms": payload.get("cms", "Web CMS Post"),
         "author": payload.get("author", "In-Context CMS Creator"),
+        "submitted_at": "Just now",
         "submittedAt": "Just now",
         "excerpt": payload.get("excerpt", ""),
         "violation": payload.get("violation", "High-risk brand policy flag"),
         "citation": payload.get("citation", "Brand Guidelines 2026"),
         "page_url": payload.get("page_url", "")
     }
-    ESCALATED_REVIEWS.insert(0, review_item)
-    return {"status": "success", "message": "Draft escalated to review queue", "review": review_item}
+    saved_item = insert_review_ticket(review_item)
+    return {"status": "success", "message": "Draft escalated to review queue", "review": saved_item}
 
 
 @router.get("/reviews")
 async def get_reviews():
     """Returns all pending escalated drafts for the Admin Dashboard."""
-    return {"reviews": ESCALATED_REVIEWS}
+    reviews = fetch_review_queue()
+    # Ensure both camelCase and snake_case for frontend compatibility
+    formatted = []
+    for r in reviews:
+        item = dict(r)
+        if "submitted_at" in item and "submittedAt" not in item:
+            item["submittedAt"] = item["submitted_at"]
+        formatted.append(item)
+    return {"reviews": formatted}
+
+
+@router.post("/reviews/{ticket_id}/action")
+async def review_action(ticket_id: str, payload: dict):
+    """Updates the status of an escalated draft (e.g. approved or rejected) in Supabase."""
+    action = payload.get("action", "approved")
+    success = update_review_ticket_status(ticket_id, action)
+    return {
+        "status": "success" if success else "error",
+        "ticket_id": ticket_id,
+        "action": action
+    }
+
+

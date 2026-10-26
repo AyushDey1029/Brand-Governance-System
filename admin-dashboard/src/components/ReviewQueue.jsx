@@ -2,14 +2,34 @@ import React, { useState } from 'react';
 import { CheckSquare, CheckCircle, XCircle, AlertCircle, ArrowRight } from 'lucide-react';
 
 export default function ReviewQueue({ reviews, setReviews, onNotify }) {
-  const handleApprove = (id) => {
-    setReviews(reviews.filter(r => r.id !== id));
-    onNotify(`Draft ${id} approved and cleared for publication!`);
+  const handleApprove = async (id) => {
+    // Optimistically remove from UI
+    setReviews((prev) => prev.filter((r) => r.id !== id));
+    onNotify(`Draft ${id} approved and signed off in Supabase!`);
+    try {
+      await fetch(`/api/reviews/${id}/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approved' })
+      });
+    } catch (err) {
+      console.error("Failed to persist approval to Supabase:", err);
+    }
   };
 
-  const handleReject = (id) => {
-    setReviews(reviews.filter(r => r.id !== id));
+  const handleReject = async (id) => {
+    // Optimistically remove from UI
+    setReviews((prev) => prev.filter((r) => r.id !== id));
     onNotify(`Draft ${id} returned to author with revision notes.`);
+    try {
+      await fetch(`/api/reviews/${id}/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'rejected' })
+      });
+    } catch (err) {
+      console.error("Failed to persist rejection to Supabase:", err);
+    }
   };
 
   return (

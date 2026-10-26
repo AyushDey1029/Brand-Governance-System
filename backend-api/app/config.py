@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     gemini_model_text: str = "gemini-1.5-flash"
     
+    # Supabase Database (Optional - falls back to local memory if unset)
+    supabase_url: str = ""
+    supabase_key: str = ""
+    database_url: str = ""
+    
     # Brand Rules (Default "Golden" Brand Palette)
     brand_primary_hex: str = "#4F46E5"  # Inkloom Indigo
     brand_secondary_hex: str = "#06B6D4" # Cyan Accent
