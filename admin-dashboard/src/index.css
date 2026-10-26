@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Inkloom AI Brand Governance Admin Dashboard - Core Design System */
 :root {
   --bg-dark: #080C14;
