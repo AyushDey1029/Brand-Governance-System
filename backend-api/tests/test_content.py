@@ -70,3 +70,20 @@ def test_vision_color_math():
     # Black to white is sqrt(3 * 255^2) approx 441.67
     dist_bw = color_distance_rgb((0, 0, 0), (255, 255, 255))
     assert 441.0 < dist_bw < 442.0
+
+
+def test_reviews_escalation():
+    payload = {
+        "excerpt": "Outdated $29/mo starter tier",
+        "violation": "Pricing drift",
+        "citation": "Pricing Matrix v2.4",
+        "author": "Test Author",
+        "cms": "WordPress"
+    }
+    res = client.post("/api/reviews/escalate", json=payload)
+    assert res.status_code == 200
+    assert res.json()["status"] == "success"
+
+    get_res = client.get("/api/reviews")
+    assert get_res.status_code == 200
+    assert len(get_res.json()["reviews"]) >= 3

@@ -158,6 +158,16 @@ document.addEventListener("DOMContentLoaded", () => {
     textIssueCount.textContent = result.text_evaluations.length;
     visionIssueCount.textContent = result.visual_evaluations.length;
 
+    // Auto-trigger in-page visual highlights on active tab
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs && tabs[0]) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: "HIGHLIGHT_IN_PAGE",
+          evaluations: result.text_evaluations
+        });
+      }
+    });
+
     // Render Text Issues
     textIssuesList.innerHTML = "";
     if (result.text_evaluations.length === 0) {
@@ -177,10 +187,15 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
           <p class="issue-explanation">${escapeHtml(item.issue)}</p>
           <div class="rewrite-box">
-            <span class="rewrite-text">${escapeHtml(item.suggested_rewrite)}</span>
-            <button class="apply-btn" data-claim="${escapeHtml(item.claim)}" data-rewrite="${escapeHtml(item.suggested_rewrite)}">
-              1-Click Apply
-            </button>
+            <span class="rewrite-text">→ ${escapeHtml(item.suggested_rewrite)}</span>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <button class="escalate-pill-btn" data-claim="${escapeHtml(item.claim)}" data-issue="${escapeHtml(item.issue)}" data-citation="${escapeHtml(item.citation)}">
+                Escalate
+              </button>
+              <button class="apply-btn" data-claim="${escapeHtml(item.claim)}" data-rewrite="${escapeHtml(item.suggested_rewrite)}">
+                1-Click Apply
+              </button>
+            </div>
           </div>
         `;
         textIssuesList.appendChild(card);
@@ -207,6 +222,30 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
               );
             }
+          });
+        });
+      });
+
+      // Hook up Escalate Buttons
+      textIssuesList.querySelectorAll(".escalate-pill-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const claim = btn.getAttribute("data-claim");
+          const issue = btn.getAttribute("data-issue");
+          const citation = btn.getAttribute("data-citation");
+          chrome.runtime.sendMessage({
+            action: "ESCALATE_ISSUE",
+            payload: {
+              excerpt: claim,
+              violation: issue,
+              citation: citation,
+              author: "Ayush Dey (In-Context)",
+              cms: "Web CMS Post"
+            }
+          }, (res) => {
+            btn.textContent = "Escalated ✓";
+            btn.style.borderColor = "#10B981";
+            btn.style.color = "#10B981";
+            btn.disabled = true;
           });
         });
       });

@@ -1,19 +1,220 @@
-/* Inkloom AI In-Context Styling */
-.inkloom-flagged-highlight {
-  background-color: rgba(239, 68, 68, 0.15) !important;
-  border-bottom: 2px wavy #EF4444 !important;
-  transition: background-color 0.3s ease;
+/* Inkloom AI - In-Context Styling & Floating Assistant */
+:root {
+  --inkloom-primary: #4F46E5;
+  --inkloom-cyan: #06B6D4;
+  --inkloom-dark: #0F172A;
+  --inkloom-card: #1E293B;
+  --inkloom-danger: #EF4444;
+  --inkloom-warning: #F59E0B;
+  --inkloom-success: #10B981;
 }
 
-.inkloom-flagged-highlight:hover {
+/* In-Page Text Highlights */
+.inkloom-mark {
+  background-color: rgba(239, 68, 68, 0.12) !important;
+  border-bottom: 2px wavy #EF4444 !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: all 0.2s ease !important;
+  border-radius: 2px !important;
+  padding: 1px 2px !important;
+  display: inline !important;
+}
+
+.inkloom-mark.inkloom-warning {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+  border-bottom: 2px wavy #F59E0B !important;
+}
+
+.inkloom-mark.inkloom-info {
+  background-color: rgba(6, 182, 212, 0.12) !important;
+  border-bottom: 2px wavy #06B6D4 !important;
+}
+
+.inkloom-mark:hover {
   background-color: rgba(239, 68, 68, 0.25) !important;
 }
 
-.inkloom-repaired-pulse {
-  animation: inkloomGreenGlow 1.2s ease-out;
+/* Interactive Floating Tooltip */
+.inkloom-tooltip-portal {
+  position: absolute;
+  z-index: 2147483647;
+  width: 320px;
+  background: #0F172A;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  border-radius: 10px;
+  padding: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #F8FAFC;
+  font-size: 12.5px;
+  line-height: 1.4;
+  pointer-events: auto;
+  animation: inkloomFadeIn 0.15s ease-out;
 }
 
-@keyframes inkloomGreenGlow {
-  0% { background-color: rgba(34, 197, 94, 0.4); }
+@keyframes inkloomFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.inkloom-tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.inkloom-badge-danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.inkloom-citation-text {
+  font-size: 10.5px;
+  color: #94A3B8;
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
+.inkloom-issue-msg {
+  color: #CBD5E1;
+  margin-bottom: 10px;
+}
+
+.inkloom-rewrite-container {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px dashed rgba(16, 185, 129, 0.35);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+
+.inkloom-rewrite-label {
+  font-size: 10px;
+  color: #10B981;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.inkloom-rewrite-val {
+  color: #34D399;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.inkloom-btn-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.inkloom-apply-btn {
+  background: #10B981;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.inkloom-apply-btn:hover {
+  opacity: 0.9;
+}
+
+.inkloom-escalate-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #94A3B8;
+  border-radius: 5px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.inkloom-escalate-btn:hover {
+  color: #F8FAFC;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Floating In-Context Pill (Bottom-Right) */
+.inkloom-floating-pill {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2147483646;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border-radius: 28px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  user-select: none;
+}
+
+.inkloom-floating-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(79, 70, 229, 0.35);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.inkloom-pill-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #06B6D4;
+  box-shadow: 0 0 8px #06B6D4;
+}
+
+.inkloom-pill-dot.flagged {
+  background: #EF4444;
+  box-shadow: 0 0 8px #EF4444;
+}
+
+.inkloom-pill-dot.compliant {
+  background: #10B981;
+  box-shadow: 0 0 8px #10B981;
+}
+
+.inkloom-pill-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #F8FAFC;
+}
+
+.inkloom-pill-badge {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 7px;
+  border-radius: 12px;
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+/* Green Pulse after successful rewrite */
+.inkloom-repaired-pulse {
+  animation: inkloomFlash 1.4s ease-out;
+}
+
+@keyframes inkloomFlash {
+  0% { background-color: rgba(16, 185, 129, 0.45); }
   100% { background-color: transparent; }
 }

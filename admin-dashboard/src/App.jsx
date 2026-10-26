@@ -138,9 +138,27 @@ export default function App() {
     }
   };
 
+  const fetchReviews = async () => {
+    try {
+      const res = await fetch('/api/reviews');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.reviews) {
+          setReviews(data.reviews);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch reviews:", e);
+    }
+  };
+
   useEffect(() => {
     checkHealth();
-    const interval = setInterval(checkHealth, 15000);
+    fetchReviews();
+    const interval = setInterval(() => {
+      checkHealth();
+      fetchReviews();
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
 
