@@ -18,6 +18,12 @@ def test_health_endpoint():
 def test_root_endpoint():
     response = client.get("/")
     assert response.status_code == 200
+    assert "Inkloom" in response.text or "Inkloom" in response.json().get("message", "")
+
+
+def test_api_status_endpoint():
+    response = client.get("/api-status")
+    assert response.status_code == 200
     assert "Inkloom AI" in response.json()["message"]
 
 

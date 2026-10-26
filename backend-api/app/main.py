@@ -1,6 +1,13 @@
-"""FastAPI Application Entry Point for Inkloom AI Brand Governance Platform."""
+"""FastAPI Application Entry Point for Inkloom AI Brand Governance Platform.
+
+Unified server: hosts the asynchronous evaluation microservice (OpenCV + RAG)
+and serves the React Admin Dashboard SPA seamlessly from a single process.
+"""
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from app.config import get_settings
 from app.routes import api_router
 
@@ -27,18 +34,49 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register routes
+# Register API routes FIRST so they take precedence over static files
 app.include_router(api_router)
 
+# Locate compiled React Admin Dashboard
+DIST_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "admin-dashboard", "dist")
+)
 
-@app.get("/")
-async def root():
-    return {
-        "message": "Inkloom AI Brand Governance API is online",
-        "docs": "/docs",
-        "health": "/health",
-        "check_endpoint": "/api/check-content"
-    }
+if os.path.exists(DIST_DIR) and os.path.isfile(os.path.join(DIST_DIR, "index.html")):
+    # Serve assets directory
+    assets_dir = os.path.join(DIST_DIR, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/dashboard")
+    async def serve_dashboard():
+        """Serve the React Admin Dashboard."""
+        return FileResponse(os.path.join(DIST_DIR, "index.html"))
+
+    @app.get("/")
+    async def root():
+        """Serve the React Admin Dashboard at the root URL."""
+        return FileResponse(os.path.join(DIST_DIR, "index.html"))
+
+    @app.get("/api-status")
+    async def api_info():
+        return {
+            "message": "Inkloom AI Unified Server is online",
+            "docs": "/docs",
+            "health": "/health",
+            "dashboard": "/",
+            "check_endpoint": "/api/check-content"
+        }
+else:
+    @app.get("/")
+    async def root_fallback():
+        return {
+            "message": "Inkloom AI Brand Governance API is online",
+            "docs": "/docs",
+            "health": "/health",
+            "check_endpoint": "/api/check-content",
+            "note": "React Admin Dashboard not built. Run 'npm run build' inside admin-dashboard/"
+        }
 
 
 if __name__ == "__main__":
