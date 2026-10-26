@@ -475,6 +475,25 @@ body::-webkit-scrollbar-thumb {
   opacity: 0.9;
 }
 
+.escalate-pill-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.escalate-pill-btn:hover {
+  color: var(--text-main);
+  border-color: var(--border-highlight);
+  background: rgba(255, 255, 255, 0.05);
+}
+
 /* Vision Grid (Vision Tab) */
 .vision-grid {
   display: flex;

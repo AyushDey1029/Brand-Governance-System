@@ -71,3 +71,51 @@ async def check_content(payload: ContentCheckRequest):
         text_evaluations=text_results,
         visual_evaluations=vision_results
     )
+
+
+# In-memory review queue storage (persists during server uptime)
+ESCALATED_REVIEWS = [
+    {
+        "id": "REV-104",
+        "cms": "WordPress Blog",
+        "author": "Marcus Vance",
+        "submittedAt": "Today at 10:15 AM",
+        "excerpt": "Upgrade to our starter edition today for only $29/mo and enjoy effortless content velocity with magic AI.",
+        "violation": "Outdated legacy pricing ($29) + Disallowed superlative ('magic AI')",
+        "citation": "Golden Facts: Pricing Matrix v2.4, Item 1",
+        "page_url": "https://example.com/wp-admin/post.php?id=12"
+    },
+    {
+        "id": "REV-105",
+        "cms": "LinkedIn Campaign",
+        "author": "Elena Rostova",
+        "submittedAt": "Today at 09:30 AM",
+        "excerpt": "Guaranteed 100% bug free brand governance with zero human overhead.",
+        "violation": "High-risk absolute guarantee ('100% bug free')",
+        "citation": "Brand Style Guide: Banned Terminology 2026",
+        "page_url": "https://linkedin.com/campaign"
+    }
+]
+
+
+@router.post("/reviews/escalate")
+async def escalate_review(payload: dict):
+    """Escalates a flagged CMS draft claim to the Admin Dashboard Review Queue."""
+    review_item = {
+        "id": f"REV-{len(ESCALATED_REVIEWS) + 106}",
+        "cms": payload.get("cms", "Web CMS Post"),
+        "author": payload.get("author", "In-Context CMS Creator"),
+        "submittedAt": "Just now",
+        "excerpt": payload.get("excerpt", ""),
+        "violation": payload.get("violation", "High-risk brand policy flag"),
+        "citation": payload.get("citation", "Brand Guidelines 2026"),
+        "page_url": payload.get("page_url", "")
+    }
+    ESCALATED_REVIEWS.insert(0, review_item)
+    return {"status": "success", "message": "Draft escalated to review queue", "review": review_item}
+
+
+@router.get("/reviews")
+async def get_reviews():
+    """Returns all pending escalated drafts for the Admin Dashboard."""
+    return {"reviews": ESCALATED_REVIEWS}

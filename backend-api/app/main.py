@@ -53,6 +53,15 @@ if os.path.exists(DIST_DIR) and os.path.isfile(os.path.join(DIST_DIR, "index.htm
         """Serve the React Admin Dashboard."""
         return FileResponse(os.path.join(DIST_DIR, "index.html"))
 
+    @app.get("/test-draft")
+    @app.get("/test-cms-draft.html")
+    async def serve_test_draft():
+        """Serve in-context test CMS draft for Chrome extension testing."""
+        cms_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "test-cms-draft.html"))
+        if os.path.isfile(cms_path):
+            return FileResponse(cms_path)
+        return {"error": "test-cms-draft.html not found"}
+
     @app.get("/")
     async def root():
         """Serve the React Admin Dashboard at the root URL."""
