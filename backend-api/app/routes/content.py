@@ -214,3 +214,44 @@ async def search_golden_facts(payload: GoldenFactSearchRequest):
         results_count=len(search_items),
         results=search_items
     )
+
+from app.models.schemas import LogoCheckRequest, LogoCheckResponse, PaletteExtractionRequest, PaletteExtractionResponse
+from app.services.vision_check import evaluate_image_palette, evaluate_logo_boundary
+from app.services.asset_parser import parse_assets_from_csv
+import os
+
+
+@router.post("/check-logo", response_model=LogoCheckResponse)
+async def check_logo(payload: LogoCheckRequest):
+    """
+    Evaluates brand logo presence, distortion/aspect-ratio, and clear-space exclusion zones.
+    """
+    return await evaluate_logo_boundary(payload)
+
+
+@router.post("/extract-palette", response_model=PaletteExtractionResponse)
+async def extract_palette_endpoint(payload: PaletteExtractionRequest):
+    """
+    Extracts dominant color and full multi-cluster color palette with coverage percentages.
+    """
+    return await evaluate_image_palette(payload.image_url, k=payload.k)
+
+
+@router.get("/brand-assets")
+async def get_brand_assets():
+    """
+    Retrieves currently loaded brand assets (approved palettes and logo guidelines).
+    """
+    csv_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "..", "vision-engine", "golden_assets.csv")
+    )
+    if os.path.isfile(csv_path):
+        profile = parse_assets_from_csv(csv_path)
+        return profile.model_dump()
+    return {
+        "brand_id": "inkloom",
+        "brand_name": "Inkloom AI",
+        "primary_color": {"hex_code": "#4F46E5", "name": "Inkloom Indigo", "tolerance_de00": 3.5},
+        "palettes": [],
+        "logos": []
+    }

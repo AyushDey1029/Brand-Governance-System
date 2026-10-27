@@ -4,6 +4,7 @@ Computer vision governance modules owned by Abhyudai Sood:
 - CIEDE2000 Perceptual Color Delta
 - Multi-scale Logo Detection and Clear-Space Verification
 - Brand Asset Ingestion Parsers
+- Batch Marketing Assets Auditor CLI
 """
 try:
     from .ciede2000 import (
@@ -33,6 +34,10 @@ try:
         parse_assets_from_json,
         export_assets_to_csv,
     )
+    from .batch_audit import (
+        audit_single_asset,
+        generate_html_report,
+    )
 except (ImportError, ValueError):
     from ciede2000 import (
         delta_e_cie2000,
@@ -61,6 +66,10 @@ except (ImportError, ValueError):
         parse_assets_from_json,
         export_assets_to_csv,
     )
+    from batch_audit import (
+        audit_single_asset,
+        generate_html_report,
+    )
 
 __all__ = [
     "delta_e_cie2000",
@@ -82,4 +91,6 @@ __all__ = [
     "parse_assets_from_csv",
     "parse_assets_from_json",
     "export_assets_to_csv",
+    "audit_single_asset",
+    "generate_html_report",
 ]

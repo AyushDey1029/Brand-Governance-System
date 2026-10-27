@@ -118,3 +118,47 @@ class GoldenFactSearchResponse(BaseModel):
     results_count: int
     results: List[GoldenFactSearchResult]
 
+class LogoCheckRequest(BaseModel):
+    """Payload to evaluate brand logo presence and boundary rules."""
+    image_url: str = Field(description="URL or base64 data URI of the image to audit.")
+    template_url: Optional[str] = Field(
+        default=None,
+        description="Optional reference logo template URL. Defaults to official Inkloom logo mark."
+    )
+    min_height: int = Field(default=20, ge=10, description="Minimum logo height in pixels.")
+    clear_space_ratio: float = Field(default=0.35, ge=0.1, le=1.0, description="Exclusion margin ratio.")
+    detection_threshold: float = Field(default=0.65, ge=0.3, le=0.99, description="Confidence threshold.")
+
+
+class LogoCheckResponse(BaseModel):
+    """Result of multi-scale logo presence, aspect ratio, and clear space checks."""
+    detected: bool
+    confidence: float
+    bounding_box: Optional[dict] = None
+    scale: float = 1.0
+    aspect_ratio_ok: bool = True
+    aspect_ratio_error_pct: float = 0.0
+    min_size_ok: bool = True
+    clear_space_ok: bool = True
+    clear_space_clutter: float = 0.0
+    status: Literal["compliant", "warning", "violation", "error"]
+    message: str
+
+
+class PaletteItem(BaseModel):
+    hex: str
+    rgb: List[int]
+    coverage: float
+
+
+class PaletteExtractionRequest(BaseModel):
+    """Payload to extract full color palette from an image."""
+    image_url: str
+    k: int = Field(default=5, ge=1, le=10)
+
+
+class PaletteExtractionResponse(BaseModel):
+    """Full palette breakdown with coverage percentages."""
+    image_url: str
+    dominant_hex: str
+    palette: List[PaletteItem]

@@ -74,3 +74,25 @@ def test_golden_assets_csv_parsing():
         profile = parse_assets_from_csv(csv_path)
         assert profile.primary_color.hex_code.upper() == "#4F46E5"
         assert len(profile.palettes) >= 1
+
+from batch_audit import audit_single_asset, generate_html_report
+from asset_parser import BrandAssetProfile, BrandColorAsset
+
+
+def test_batch_audit_single_asset(tmp_path):
+    """Verify batch audit logic on a local test image."""
+    img_path = str(tmp_path / "test_indigo.png")
+    img = np.full((100, 100, 3), (229, 70, 79), dtype=np.uint8)  # Indigo
+    cv2.imwrite(img_path, img)
+
+    profile = BrandAssetProfile()
+    res = audit_single_asset(img_path, profile, check_logo=False)
+    assert res["status"] == "compliant"
+    assert res["dominant_hex"].upper() == "#4F46E5"
+    assert res["distance_de00"] <= 1.0
+
+    # Test report generation
+    report_path = str(tmp_path / "report.html")
+    generate_html_report([res], profile, report_path)
+    assert os.path.isfile(report_path)
+    assert os.path.getsize(report_path) > 500

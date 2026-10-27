@@ -134,3 +134,53 @@ logo,main_logo,Test Logo,,,24
     assert len(profile.palettes) == 1
     assert profile.palettes[0].hex_code.upper() == "#06B6D4"
     assert len(profile.logos) == 1
+
+from fastapi.testclient import TestClient
+from app.main import app
+
+api_client = TestClient(app)
+
+
+def test_brand_assets_endpoint():
+    """Verify /api/brand-assets returns the configured brand guidelines."""
+    res = api_client.get("/api/brand-assets")
+    assert res.status_code == 200
+    data = res.json()
+    assert "brand_name" in data
+    assert data["primary_color"]["hex_code"].upper() == "#4F46E5"
+
+
+def test_extract_palette_endpoint():
+    """Verify /api/extract-palette endpoint extracts color clusters."""
+    bytes_img = create_test_image_bytes((79, 70, 229))
+    b64_img = "data:image/png;base64," + base64.b64encode(bytes_img).decode("utf-8")
+    
+    res = api_client.post("/api/extract-palette", json={"image_url": b64_img, "k": 3})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["dominant_hex"].upper() == "#4F46E5"
+    assert len(data["palette"]) >= 1
+    assert data["palette"][0]["hex"].upper() == "#4F46E5"
+
+
+def test_check_logo_endpoint():
+    """Verify /api/check-logo endpoint detects logo and checks clear space."""
+    # Create canvas with canonical Inkloom circle logo
+    canvas = np.full((300, 300, 3), 255, dtype=np.uint8)
+    cv2.circle(canvas, (100, 100), 24, (229, 70, 79), -1)  # #4F46E5 BGR
+    cv2.circle(canvas, (100, 100), 14, (255, 255, 255), -1)
+    cv2.circle(canvas, (100, 100), 7, (212, 182, 6), -1)   # #06B6D4 BGR
+
+    _, buffer = cv2.imencode(".png", canvas)
+    b64_canvas = "data:image/png;base64," + base64.b64encode(buffer.tobytes()).decode("utf-8")
+
+    res = api_client.post("/api/check-logo", json={
+        "image_url": b64_canvas,
+        "detection_threshold": 0.55
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert data["detected"] is True
+    assert data["aspect_ratio_ok"] is True
+    assert data["clear_space_ok"] is True
+    assert data["status"] == "compliant"

@@ -352,3 +352,150 @@ async def eval_visual_compliance(
 async def evaluate_images_compliance(image_urls: List[str]) -> List[VisionCheckResult]:
     """Runs concurrent OpenCV color evaluation across multiple images using application settings."""
     return await eval_visual_compliance(image_urls)
+
+from app.models.schemas import LogoCheckRequest, LogoCheckResponse, PaletteExtractionResponse, PaletteItem
+from app.services.logo_detector import verify_logo_compliance
+
+
+def get_canonical_logo_template() -> np.ndarray:
+    """Generates an in-memory canonical Inkloom AI brand mark template for testing/default matching."""
+    template = np.full((60, 60, 3), 255, dtype=np.uint8)
+    # Draw Inkloom Indigo circle seal with inner accents
+    cv2.circle(template, (30, 30), 24, (229, 70, 79), -1)  # #4F46E5 in BGR
+    cv2.circle(template, (30, 30), 14, (255, 255, 255), -1)
+    cv2.circle(template, (30, 30), 7, (212, 182, 6), -1)   # #06B6D4 in BGR
+    return template
+
+
+async def evaluate_image_palette(image_url: str, k: int = 5) -> PaletteExtractionResponse:
+    """Extracts dominant color and full multi-cluster color palette with coverage percentages."""
+    image_bytes = await fetch_image_bytes(image_url)
+    if not image_bytes:
+        return PaletteExtractionResponse(
+            image_url=image_url,
+            dominant_hex="#000000",
+            palette=[PaletteItem(hex="#000000", rgb=[0, 0, 0], coverage=100.0)]
+        )
+
+    np_arr = np.frombuffer(image_bytes, np.uint8)
+    img = cv2.imdecode(np_arr, cv2.IMREAD_UNCHANGED)
+    if img is None:
+        return PaletteExtractionResponse(
+            image_url=image_url,
+            dominant_hex="#000000",
+            palette=[PaletteItem(hex="#000000", rgb=[0, 0, 0], coverage=100.0)]
+        )
+
+    h, w = img.shape[:2]
+    max_dim = 150
+    if max(h, w) > max_dim:
+        scale = max_dim / float(max(h, w))
+        img = cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+
+    if len(img.shape) == 3 and img.shape[2] == 4:
+        alpha = img[:, :, 3]
+        bgr = img[:, :, :3]
+        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+        pixels = rgb[alpha > 25].astype(np.float32)
+    else:
+        if len(img.shape) == 2:
+            rgb = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        else:
+            rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        pixels = rgb.reshape(-1, 3).astype(np.float32)
+
+    if len(pixels) == 0:
+        return PaletteExtractionResponse(
+            image_url=image_url,
+            dominant_hex="#000000",
+            palette=[PaletteItem(hex="#000000", rgb=[0, 0, 0], coverage=100.0)]
+        )
+
+    num_clusters = min(k, len(pixels))
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 15, 0.5)
+    _, labels, centers = cv2.kmeans(pixels, num_clusters, None, criteria, 3, cv2.KMEANS_PP_CENTERS)
+
+    counts = np.bincount(labels.flatten())
+    total_samples = float(len(pixels))
+    sorted_indices = np.argsort(counts)[::-1]
+
+    palette_items = []
+    for idx in sorted_indices:
+        c = centers[idx]
+        r, g, b = int(round(c[0])), int(round(c[1])), int(round(c[2]))
+        cov = round(float(counts[idx] / total_samples) * 100.0, 1)
+        palette_items.append(PaletteItem(
+            hex=rgb_to_hex(r, g, b),
+            rgb=[r, g, b],
+            coverage=cov
+        ))
+
+    dominant_hex = palette_items[0].hex if palette_items else "#000000"
+    return PaletteExtractionResponse(
+        image_url=image_url,
+        dominant_hex=dominant_hex,
+        palette=palette_items
+    )
+
+
+async def evaluate_logo_boundary(request: LogoCheckRequest) -> LogoCheckResponse:
+    """Evaluates an image for brand logo presence, distortion, and clear-space compliance."""
+    target_bytes = await fetch_image_bytes(request.image_url)
+    if not target_bytes:
+        return LogoCheckResponse(
+            detected=False,
+            confidence=0.0,
+            status="error",
+            message="Could not download or decode target canvas image asset."
+        )
+
+    np_target = np.frombuffer(target_bytes, np.uint8)
+    target_img = cv2.imdecode(np_target, cv2.IMREAD_UNCHANGED)
+    if target_img is None:
+        return LogoCheckResponse(
+            detected=False,
+            confidence=0.0,
+            status="error",
+            message="Failed to decode target image with OpenCV."
+        )
+
+    if request.template_url:
+        tpl_bytes = await fetch_image_bytes(request.template_url)
+        if tpl_bytes:
+            np_tpl = np.frombuffer(tpl_bytes, np.uint8)
+            template_img = cv2.imdecode(np_tpl, cv2.IMREAD_UNCHANGED)
+        else:
+            template_img = get_canonical_logo_template()
+    else:
+        template_img = get_canonical_logo_template()
+
+    try:
+        res = verify_logo_compliance(
+            target_img_or_path=target_img,
+            template_img_or_path=template_img,
+            min_height=request.min_height,
+            clear_space_ratio=request.clear_space_ratio,
+            detection_threshold=request.detection_threshold
+        )
+        data = res.to_dict()
+        return LogoCheckResponse(
+            detected=data["detected"],
+            confidence=data["confidence"],
+            bounding_box=data["bounding_box"],
+            scale=data["scale"],
+            aspect_ratio_ok=data["aspect_ratio_ok"],
+            aspect_ratio_error_pct=data["aspect_ratio_error_pct"],
+            min_size_ok=data["min_size_ok"],
+            clear_space_ok=data["clear_space_ok"],
+            clear_space_clutter=data["clear_space_clutter"],
+            status=data["status"],
+            message=data["message"]
+        )
+    except Exception as e:
+        logger.error("Logo verification failed: %s", e)
+        return LogoCheckResponse(
+            detected=False,
+            confidence=0.0,
+            status="error",
+            message=f"Logo detection error: {str(e)}"
+        )
