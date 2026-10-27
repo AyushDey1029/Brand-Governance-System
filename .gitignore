@@ -49,3 +49,8 @@ htmlcov/
 node_modules/
 .eslintcache
 
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3

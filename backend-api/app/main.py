@@ -1,17 +1,26 @@
-﻿"""FastAPI Application Entry Point for Inkloom AI Brand Governance Platform.
+"""FastAPI Application Entry Point for Inkloom AI Brand Governance Platform.
 
 Unified server: hosts the asynchronous evaluation microservice (OpenCV + RAG)
 and serves the React Admin Dashboard SPA seamlessly from a single process.
 """
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.config import get_settings
 from app.routes import api_router
+from app.routes.v1 import router as v1_router
+from app.services.database import init_db
 
 settings = get_settings()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize persistent SQLite database & seed default data on startup
+    init_db()
+    yield
 
 app = FastAPI(
     title=settings.app_name,
@@ -21,7 +30,8 @@ app = FastAPI(
         "deterministic OpenCV color checks and RAG-driven factual claims verification."
     ),
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # Configure CORS Middleware for Chrome Extension & Admin UI
@@ -34,7 +44,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register API routes FIRST so they take precedence over static files
+# Register API v1 routes for the React Admin Dashboard & Creator Studio
+app.include_router(v1_router, prefix="/api", tags=["API v1"])
+app.include_router(v1_router, tags=["API v1 Root"])
+
+# Register legacy API routes for Chrome Extension & tests
 app.include_router(api_router)
 
 # Mount test data visual assets directory for local testing
@@ -99,6 +113,7 @@ async def api_info():
 
 if __name__ == "__main__":
     import uvicorn
+    init_db()
     uvicorn.run(
         "app.main:app",
         host=settings.host,
