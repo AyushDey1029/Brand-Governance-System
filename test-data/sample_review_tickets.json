@@ -1,0 +1,46 @@
+[
+  {
+    "id": "REV-201",
+    "cms": "WordPress Blog",
+    "author": "Sarah Jenkins",
+    "submittedAt": "10 minutes ago",
+    "excerpt": "Get started on our starter tier for just $29/mo with magic AI content velocity.",
+    "violation": "Outdated pricing ($29) + Banned superlative ('magic AI')",
+    "citation": "Golden Facts: Pricing Matrix v2.4 Section 1",
+    "page_url": "https://company.com/wp-admin/post.php?id=842",
+    "status": "pending"
+  },
+  {
+    "id": "REV-202",
+    "cms": "LinkedIn Creator",
+    "author": "Marcus Vance",
+    "submittedAt": "25 minutes ago",
+    "excerpt": "Inkloom is the cheapest enterprise governance platform with 100% bug free assurance.",
+    "violation": "Disallowed superlative ('cheapest') + Absolute guarantee ('100% bug free')",
+    "citation": "Brand Style Guide: Legal Risk Policy Section 4",
+    "page_url": "https://linkedin.com/feed/post/urn:li:share:9842",
+    "status": "pending"
+  },
+  {
+    "id": "REV-203",
+    "cms": "Webflow Landing Page",
+    "author": "Alex Rivera",
+    "submittedAt": "1 hour ago",
+    "excerpt": "Try out our non-existent $19 tier for effortless velocity without precision.",
+    "violation": "Non-existent pricing ($19) + Distorted brand slogan",
+    "citation": "Brand Identity Standards v2.4 Section 2",
+    "page_url": "https://webflow.com/design/inkloom-landing",
+    "status": "pending"
+  },
+  {
+    "id": "REV-204",
+    "cms": "Substack Newsletter",
+    "author": "Elena Rostova",
+    "submittedAt": "2 hours ago",
+    "excerpt": "Zero risk automated publishing with flawless quality guarantees.",
+    "violation": "Disallowed superlative ('flawless') + Unsubstantiated claim ('zero risk')",
+    "citation": "Brand Style Guide: Banned Terminology 2026",
+    "page_url": "https://inkloom.substack.com/p/draft-12",
+    "status": "pending"
+  }
+]

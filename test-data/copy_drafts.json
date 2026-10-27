@@ -1,0 +1,111 @@
+[
+  {
+    "id": "draft-01-pricing-drift",
+    "title": "Blog Post: Getting Started with Inkloom AI",
+    "channel": "blog",
+    "cms": "WordPress",
+    "author": "Sarah Jenkins (Growth Content)",
+    "text": "Empower your team today with Inkloom AI. You can get started on our starter tier for just $29/mo, unlocking full real-time brand verification across your entire organization. Experience magic AI that guarantees zero risk and flawless content generation every time.",
+    "expected_violations": [
+      {
+        "type": "pricing",
+        "flag": "$29/mo",
+        "fix": "$49/month"
+      },
+      {
+        "type": "superlative",
+        "flag": "magic AI",
+        "fix": "high-confidence AI assistance"
+      },
+      {
+        "type": "superlative",
+        "flag": "zero risk",
+        "fix": "comprehensive risk mitigation"
+      },
+      {
+        "type": "superlative",
+        "flag": "flawless",
+        "fix": "rigorous and consistent"
+      }
+    ]
+  },
+  {
+    "id": "draft-02-social-superlatives",
+    "title": "LinkedIn Campaign: Enterprise Brand Velocity",
+    "channel": "social",
+    "cms": "LinkedIn Creator",
+    "author": "Marcus Vance (Social Lead)",
+    "text": "Tired of brand review bottlenecks? Inkloom AI is the cheapest enterprise compliance tool on the market. Our software guarantees 100% bug free governance so your writers publish velocity without human overhead.",
+    "expected_violations": [
+      {
+        "type": "superlative",
+        "flag": "cheapest",
+        "fix": "most cost-effective enterprise solution"
+      },
+      {
+        "type": "superlative",
+        "flag": "100% bug free",
+        "fix": "extensively tested and highly reliable"
+      },
+      {
+        "type": "slogan",
+        "flag": "velocity without",
+        "fix": "Velocity with Precision"
+      }
+    ]
+  },
+  {
+    "id": "draft-03-nonexistent-tier",
+    "title": "Newsletter: Community Updates Q3",
+    "channel": "email",
+    "cms": "Substack / Mailchimp",
+    "author": "Elena Rostova (DevRel)",
+    "text": "We are thrilled to welcome our new community creators! Try out our $19 starter plan today. Inkloom brings velocity without precision to every developer workspace.",
+    "expected_violations": [
+      {
+        "type": "pricing",
+        "flag": "$19",
+        "fix": "free Community tier or $49/mo Starter tier"
+      },
+      {
+        "type": "slogan",
+        "flag": "velocity without",
+        "fix": "Velocity with Precision"
+      }
+    ]
+  },
+  {
+    "id": "draft-04-fully-compliant",
+    "title": "Product Announcement: Inkloom Governance v2.4",
+    "channel": "web",
+    "cms": "Webflow CMS",
+    "author": "Ayush Dey (Product Lead)",
+    "text": "Inkloom AI accelerates enterprise content creation with deterministic brand verification. Starting at $49/month with our Starter tier, marketing teams achieve Velocity with Precision through verified Golden Facts, SOC2 Type II security, and instant in-context recommendations.",
+    "expected_violations": []
+  },
+  {
+    "id": "draft-05-press-release",
+    "title": "Press Release: Inkloom AI Announces Series A",
+    "channel": "press",
+    "cms": "PR Newswire",
+    "author": "PR Communications Team",
+    "text": "Inkloom AI, the leading enterprise brand governance platform, today announced widespread adoption. Unlike legacy tools, Inkloom provides flawless verification and zero risk for Fortune 500 publishing. Enterprise packages begin with our $29 tier.",
+    "expected_violations": [
+      {
+        "type": "superlative",
+        "flag": "flawless",
+        "fix": "rigorous and consistent"
+      },
+      {
+        "type": "superlative",
+        "flag": "zero risk",
+        "fix": "comprehensive risk mitigation"
+      },
+      {
+        "type": "pricing",
+        "flag": "$29",
+        "fix": "$49/month"
+      }
+    ]
+  }
+]

@@ -37,16 +37,12 @@ app.add_middleware(
 # Register API routes FIRST so they take precedence over static files
 app.include_router(api_router)
 
-# Status endpoint is always available
-@app.get("/api-status")
-async def api_info():
-    return {
-        "message": "Inkloom AI Unified Server is online",
-        "docs": "/docs",
-        "health": "/health",
-        "dashboard": "/",
-        "check_endpoint": "/api/check-content"
-    }
+# Mount test data visual assets directory for local testing
+TEST_ASSETS_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "test-data", "visual-assets")
+)
+if os.path.exists(TEST_ASSETS_DIR):
+    app.mount("/test-assets", StaticFiles(directory=TEST_ASSETS_DIR), name="test-assets")
 
 # Locate compiled React Admin Dashboard
 DIST_DIR = os.path.abspath(
