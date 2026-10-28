@@ -930,7 +930,7 @@ export const CreatorStudioView: React.FC = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             cms: channel === "linkedin" ? "LinkedIn Campaign" : "Web CMS Post",
-            author: "Marcus Vance (Creator)",
+            author: currentUser?.full_name || "Content Creator",
             excerpt: draftText.slice(0, 160),
             violation:
               findings.filter((f) => !f.isApplied).map((f) => f.explanation).join("; ") ||

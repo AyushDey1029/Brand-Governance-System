@@ -175,7 +175,7 @@ export const MOCK_AUDIT_HISTORY: AuditRecord[] = [
     overallScore: 54,
     status: "NEEDS_REVIEW",
     summary: "Flagged 2 critical factual inaccuracies (SLA uptime & unauthorized discount) and 1 prohibited superlative claim.",
-    authorName: "Sarah Chen (Marketing)",
+    authorName: "Content Creator (Marketing)",
     findings: [
       {
         id: "f-1",
@@ -249,7 +249,7 @@ export const MOCK_REVIEW_QUEUE: ReviewQueueItem[] = [
     id: "rev-201",
     brandId: "brand-nexus",
     auditId: "audit-101",
-    creatorName: "Sarah Chen",
+    creatorName: "Content Creator",
     creatorNotes: "VP of Sales requested urgent promotional copy for Enterprise Tech Summit. Need review exception for discount tier if valid.",
     submittedAt: "25 Oct 2026, 15:45",
     status: "PENDING",

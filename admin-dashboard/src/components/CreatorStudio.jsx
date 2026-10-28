@@ -145,7 +145,7 @@ export default function CreatorStudio({ onNotify }) {
   };
 
   const handleEscalate = async () => {
-    const authorName = user?.fullName || user?.email || 'Marcus Vance';
+    const authorName = user?.fullName || user?.email || 'Content Creator';
     try {
       await fetch('/api/reviews/escalate', {
         method: 'POST',

@@ -131,13 +131,13 @@ export default function Navbar({ onEnterDemo }) {
 
         {/* GROUP 3: User Chip + CTA */}
         <div className="navbar-actions-group">
-          {user ? (
+          {user && !user.isDemo && user.fullName ? (
             <div className="relative" ref={userChipRef}>
               <div 
                 className="navbar-user-chip cursor-pointer"
                 role="button"
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                aria-label={`Signed in as ${user.fullName || 'User'}, role: ${isAdmin ? 'Brand Administrator' : 'Content Creator'}. Click for options.`}
+                aria-label={`Signed in as ${user.fullName}, role: ${isAdmin ? 'Brand Administrator' : 'Content Creator'}. Click for options.`}
                 aria-expanded={userDropdownOpen}
                 tabIndex={0}
               >
@@ -148,7 +148,7 @@ export default function Navbar({ onEnterDemo }) {
                   {getInitials(user.fullName || user.email)}
                 </div>
                 <span className="navbar-user-name" title={user.fullName || user.email}>
-                  {user.fullName || 'Sarah Chen'}
+                  {user.fullName}
                 </span>
                 <span className={`navbar-user-badge ${isAdmin ? 'admin' : ''}`}>
                   {isAdmin ? 'Brand Admin' : 'Creator'}
@@ -158,7 +158,7 @@ export default function Navbar({ onEnterDemo }) {
               {userDropdownOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-[#18121f] border border-[var(--ink-nav-border)] rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
                   <div className="px-3 py-1.5 text-xs text-white/60 border-b border-white/10 mb-1 truncate font-sans">
-                    {user.email || 'user@inkloom.internal'}
+                    {user.email || 'user@nexuscloud.internal'}
                   </div>
                   <button
                     type="button"

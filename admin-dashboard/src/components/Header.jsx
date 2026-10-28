@@ -89,11 +89,11 @@ export default function Header({ currentTitle, apiStatus = {}, onRefreshStatus, 
         {/* Workspace Tag */}
         <div className="header-workspace-tag">
           <Activity size={14} color={isAdmin ? "#F59E0B" : "#F97316"} />
-          <span>Workspace: <strong>Acme Brand v2</strong></span>
+          <span>Workspace: <strong>Nexus Cloud</strong></span>
         </div>
 
         {/* User Authentication Profile Pill */}
-        {user ? (
+        {user && !user.isDemo && user.fullName ? (
           <div className="user-profile-menu-wrap" ref={menuRef}>
             <button 
               className={`user-profile-pill ${isAdmin ? 'admin' : ''}`}
@@ -127,7 +127,7 @@ export default function Header({ currentTitle, apiStatus = {}, onRefreshStatus, 
 
                 <div className="dropdown-item-info">
                   <span>Workspace Isolation</span>
-                  <strong>Acme Brand v2 (Enterprise)</strong>
+                  <strong>Nexus Cloud (Enterprise)</strong>
                 </div>
 
                 <div className="dropdown-divider" />

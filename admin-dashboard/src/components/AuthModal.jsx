@@ -196,7 +196,7 @@ export default function AuthModal({ onEnterWorkspace }) {
                   <User size={16} className="auth-field-icon" />
                   <input 
                     type="text" 
-                    placeholder={isAdminPortal ? "e.g. Sarah Chen (Brand Director)" : "e.g. Marcus Vance"} 
+                    placeholder={isAdminPortal ? "e.g. Alex Morgan (Brand Manager)" : "e.g. Jordan Lee"} 
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
@@ -282,12 +282,12 @@ export default function AuthModal({ onEnterWorkspace }) {
           {isAdminPortal ? (
             <>
               <Crown size={15} color="#FDE047" />
-              <span>Quick 1-Click Demo as <strong>Sarah Chen (Brand Director)</strong></span>
+              <span>Quick 1-Click Demo as <strong>Brand Manager</strong></span>
             </>
           ) : (
             <>
               <Sparkles size={15} color="#FED7AA" />
-              <span>Quick 1-Click Demo as <strong>Marcus Vance (Creator)</strong></span>
+              <span>Quick 1-Click Demo as <strong>Content Creator</strong></span>
             </>
           )}
         </button>
