@@ -21,18 +21,24 @@
   display: inline !important;
 }
 
+.inkloom-mark.inkloom-high {
+  background-color: rgba(239, 68, 68, 0.16) !important;
+  border-bottom: 2.5px wavy #EF4444 !important;
+}
+
 .inkloom-mark.inkloom-warning {
-  background-color: rgba(245, 158, 11, 0.14) !important;
-  border-bottom: 2px wavy #F59E0B !important;
+  background-color: rgba(245, 158, 11, 0.16) !important;
+  border-bottom: 2.5px wavy #F59E0B !important;
 }
 
 .inkloom-mark.inkloom-info {
-  background-color: rgba(6, 182, 212, 0.14) !important;
+  background-color: rgba(6, 182, 212, 0.16) !important;
   border-bottom: 2px wavy #06B6D4 !important;
 }
 
 .inkloom-mark:hover {
   background-color: rgba(239, 68, 68, 0.28) !important;
+  filter: brightness(1.15) !important;
 }
 
 /* Interactive Floating Hover Tooltip */
