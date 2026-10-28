@@ -6,13 +6,10 @@
  * - Design & Office: Canva (Text items, ProseMirror), Notion, Google Workspace
  * - CMS & Web: WordPress (Gutenberg), Webflow, standard contenteditable & textareas
  * 
- * Capabilities:
- * 1. Real-time text listening: Points out changes directly onto the text with wavy underlines as you type.
- * 2. In-text hover tooltip: Shows citation, explanation, and 1-Click Apply right on top of the text.
- * 3. Floating Status Pill: Anchored in bottom-right with dynamic pulse and issue counter.
- * 4. In-page Dashboard Popup: Compact mini-cockpit with compliance score, findings, and 1-click rewrites.
- * 5. Isolated editor targeting: Accurately analyzes draft copy without scraping website navigation/page chrome.
- * 6. Dual-engine verification: FastAPI RAG + OpenCV backend with instant high-assurance offline fallback.
+ * Highlighting Engine:
+ * Uses a zero-DOM-mutation Transparent Overlay Layer. It measures exact text bounding
+ * boxes via Range.getClientRects() to render wavy underlines without modifying the editor's
+ * DOM nodes. This prevents ProseMirror / Draft.js / React reconciliation from stripping marks.
  */
 
 (function () {
@@ -25,6 +22,8 @@
   let isAuditing = false;
   let currentTargetEditor = null;
   let realtimeDebounceTimer = null;
+  let overlayContainer = null;
+  let trackedTextRanges = [];
 
   // =========================================================================
   // 1. PLATFORM DETECTION & DRAFT EDITOR TARGETING
@@ -50,7 +49,8 @@
     if (
       el.closest("#inkloom-inpage-popup") ||
       el.closest("#inkloom-floating-pill") ||
-      el.closest("#inkloom-tooltip-portal")
+      el.closest("#inkloom-tooltip-portal") ||
+      el.closest("#inkloom-highlights-overlay")
     ) {
       return;
     }
@@ -67,7 +67,7 @@
       currentTargetEditor = el;
     } else {
       const parentEditable = el.closest(
-        '[contenteditable="true"], .ProseMirror, .ql-editor, [role="textbox"], textarea, [data-slate-editor="true"]'
+        '[contenteditable="true"], .ProseMirror, .ql-editor, [role="textbox"], textarea, [data-slate-editor="true"], .editor-content'
       );
       if (parentEditable) {
         currentTargetEditor = parentEditable;
@@ -113,7 +113,7 @@
       '.share-creation-state__text-editor [contenteditable="true"]',
       'div.ql-editor[contenteditable="true"]',
       'div.msg-form__contenteditable[contenteditable="true"]',
-      // Canva
+      // Canva & Design tools
       'div.ProseMirror',
       'div[data-slate-editor="true"]',
       'textarea[data-testid]',
@@ -140,12 +140,13 @@
         (el) =>
           !el.closest("#inkloom-inpage-popup") &&
           !el.closest("#inkloom-floating-pill") &&
-          !el.closest("#inkloom-tooltip-portal")
+          !el.closest("#inkloom-tooltip-portal") &&
+          !el.closest("#inkloom-highlights-overlay")
       );
 
       for (const node of candidates) {
         // Exclude site navigation, global search, header, footer elements
-        if (node.closest("nav, header, footer, .global-nav, .nav__container, #global-nav")) continue;
+        if (node.closest("nav, header, footer, .global-nav, .nav__container, #global-nav, aside")) continue;
         const text = (node.innerText || node.value || "").trim();
         if (text.length > 5) {
           currentTargetEditor = node;
@@ -157,7 +158,7 @@
     return null;
   }
 
-  // Extract ONLY draft text and draft images (never scrape website UI logos/avatars)
+  // Extract ONLY draft text and draft images
   function extractContent() {
     let extractedText = "";
     const editor = findActiveEditor();
@@ -175,7 +176,12 @@
       const mainContainer = document.querySelector(".cms-container, article, main, [role='main']");
       if (mainContainer) {
         const paragraphs = Array.from(mainContainer.querySelectorAll("p, h1, h2, h3, blockquote"))
-          .filter((p) => !p.closest("#inkloom-inpage-popup") && !p.closest("#inkloom-floating-pill"))
+          .filter(
+            (p) =>
+              !p.closest("#inkloom-inpage-popup") &&
+              !p.closest("#inkloom-floating-pill") &&
+              !p.closest("nav, header, footer, aside")
+          )
           .map((p) => p.innerText.trim())
           .filter((t) => t.length > 10);
         if (paragraphs.length > 0) {
@@ -185,7 +191,6 @@
     }
 
     // 3. Draft Image extraction: ONLY check images inside the editor or article preview
-    // NEVER scrape random webpage header/nav icons or user profile avatars!
     let imageUrls = [];
     if (editor) {
       const editorImgs = Array.from(editor.querySelectorAll("img[src]"));
@@ -296,11 +301,8 @@
 
     document.body.appendChild(popup);
 
-    if (!currentAuditData) {
-      runAudit();
-    } else {
-      renderPopupContents(currentAuditData);
-    }
+    // ALWAYS run a fresh audit when popup opens
+    runAudit(false);
   }
 
   function renderPopupContents(data) {
@@ -309,8 +311,9 @@
     const platform = detectPlatform();
     const score = typeof data.compliance_score === "number" ? data.compliance_score : 100;
     const issues = data.text_evaluations || [];
-    const statusClass = score >= 90 ? "compliant" : score >= 70 ? "warning" : "flagged";
-    const statusLabel = score >= 90 ? "100% On-Brand" : `${issues.length} Deviation Require Resolution`;
+    const statusClass = score >= 90 && issues.length === 0 ? "compliant" : score >= 70 ? "warning" : "flagged";
+    const statusLabel =
+      score >= 90 && issues.length === 0 ? "100% On-Brand" : `${issues.length} Deviation${issues.length > 1 ? 's' : ''} Require Resolution`;
     const wordCount = (data.extracted_text || "").split(/\s+/).filter(Boolean).length;
 
     activePopup.innerHTML = `
@@ -426,7 +429,7 @@
     // Hook Rescan Button
     activePopup.querySelector("#inkloom-pop-rescan")?.addEventListener("click", (e) => {
       e.stopPropagation();
-      runAudit();
+      runAudit(false);
     });
 
     // Hook 1-Click Apply and Escalate buttons
@@ -437,14 +440,6 @@
         const issue = issues[index];
         if (issue) {
           executeRewrite(issue.claim, issue.suggested_rewrite);
-          issues.splice(index, 1);
-          currentAuditData.text_evaluations = issues;
-          currentAuditData.compliance_score = calculateScore(issues);
-          renderPopupContents(currentAuditData);
-          updatePillStatus(
-            issues.length > 0 ? "flagged" : "compliant",
-            issues.length > 0 ? `${issues.length} Flags` : "100%"
-          );
         }
       });
     });
@@ -465,6 +460,7 @@
   }
 
   function calculateScore(issues) {
+    if (!issues || issues.length === 0) return 100;
     let score = 100;
     for (const item of issues) {
       if (item.severity === "high") score -= 25;
@@ -482,50 +478,61 @@
   });
 
   // =========================================================================
-  // 4. REAL-TIME AUDIT & EVALUATION PIPELINE
+  // 4. INSTANT LOCAL DETERMINISTIC AUDIT + ASYNC BACKEND SYNC
   // =========================================================================
 
   function runAudit(isRealtime = false) {
-    if (isAuditing && !isRealtime) return;
-    isAuditing = true;
-
-    if (!isRealtime) {
-      updatePillStatus("auditing", "Scanning...");
-      if (activePopup) {
-        const body = activePopup.querySelector("#inkloom-pop-body");
-        if (body) {
-          body.innerHTML = `
-            <div style="padding: 30px 16px; text-align: center; color: #94A3B8; font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-              <div class="inkloom-pill-dot" style="width: 12px; height: 12px; background: #F26A0F; box-shadow: 0 0 12px #F26A0F;"></div>
-              <span>Evaluating draft copy against Nexus Cloud Golden Facts...</span>
-            </div>
-          `;
-        }
-      }
-    }
-
     const pageData = extractContent();
 
-    // Query background service worker -> FastAPI backend
-    chrome.runtime.sendMessage(
-      {
-        action: "CHECK_CONTENT",
-        text: pageData.text,
-        image_urls: pageData.image_urls,
-        page_url: pageData.page_url,
-        channel: pageData.platform.toLowerCase()
-      },
-      (res) => {
-        isAuditing = false;
-        if (res && res.success && res.data) {
-          handleAuditSuccess(res.data, pageData.text);
-        } else {
-          // Resilient high-assurance local deterministic evaluation (100% aligned with Creator Studio)
-          const fallbackData = runLocalDeterministicAudit(pageData.text);
-          handleAuditSuccess(fallbackData, pageData.text);
-        }
+    if (!pageData.text || pageData.text.length < 5) {
+      clearHighlights();
+      updatePillStatus("compliant", "100%");
+      currentAuditData = {
+        status: "compliant",
+        compliance_score: 100,
+        text_evaluations: [],
+        extracted_text: ""
+      };
+      if (activePopup) {
+        renderPopupContents(currentAuditData);
       }
-    );
+      return;
+    }
+
+    // STEP 1: INSTANT LOCAL DETERMINISTIC EVALUATION (0ms Latency!)
+    // Ensures real-time underlines immediately appear without waiting for backend
+    const localResult = runLocalDeterministicAudit(pageData.text);
+    handleAuditSuccess(localResult, pageData.text);
+
+    // STEP 2: ASYNC BACKEND REFINEMENT (FastAPI dual-engine)
+    if (!isAuditing) {
+      isAuditing = true;
+      try {
+        chrome.runtime.sendMessage(
+          {
+            action: "CHECK_CONTENT",
+            text: pageData.text,
+            image_urls: pageData.image_urls,
+            page_url: pageData.page_url,
+            channel: pageData.platform.toLowerCase()
+          },
+          (res) => {
+            isAuditing = false;
+            if (chrome.runtime.lastError) {
+              return;
+            }
+            if (res && res.success && res.data && Array.isArray(res.data.text_evaluations)) {
+              // If backend found findings, use them; otherwise local findings stand
+              if (res.data.text_evaluations.length > 0) {
+                handleAuditSuccess(res.data, pageData.text);
+              }
+            }
+          }
+        );
+      } catch (err) {
+        isAuditing = false;
+      }
+    }
   }
 
   function handleAuditSuccess(auditData, extractedText) {
@@ -537,7 +544,7 @@
     highlightIssues(activeIssues);
 
     // 2. Update status pill
-    const score = typeof auditData.compliance_score === "number" ? auditData.compliance_score : 100;
+    const score = typeof auditData.compliance_score === "number" ? auditData.compliance_score : calculateScore(activeIssues);
     const badgeText = activeIssues.length > 0 ? `${activeIssues.length} Flag${activeIssues.length > 1 ? 's' : ''}` : "100%";
     const status = activeIssues.length > 0 ? (score < 70 ? "flagged" : "warning") : "compliant";
 
@@ -549,10 +556,9 @@
     }
   }
 
-  // Local deterministic rules engine (Identical to Creator Studio & text_rag.py)
+  // Deterministic rules engine (100% aligned with Creator Studio & Golden Facts)
   function runLocalDeterministicAudit(text) {
     const textStr = text || "";
-    const lower = textStr.toLowerCase();
     const findings = [];
 
     // 1. Disallowed comparative superlative 'cheapest' (Matches Image 1 Creator Studio)
@@ -677,10 +683,29 @@
   }
 
   // =========================================================================
-  // 5. IN-PAGE REAL-TIME TEXT HIGHLIGHTING & TOOLTIPS
+  // 5. HYBRID HIGH-ASSURANCE TEXT HIGHLIGHTING (Overlay + In-DOM)
   // =========================================================================
 
+  function getOrCreateOverlay() {
+    if (!overlayContainer || !document.body.contains(overlayContainer)) {
+      let existing = document.getElementById("inkloom-highlights-overlay");
+      if (existing) {
+        overlayContainer = existing;
+      } else {
+        overlayContainer = document.createElement("div");
+        overlayContainer.id = "inkloom-highlights-overlay";
+        document.body.appendChild(overlayContainer);
+      }
+    }
+    return overlayContainer;
+  }
+
   function clearHighlights() {
+    if (overlayContainer) {
+      overlayContainer.innerHTML = "";
+    }
+    trackedTextRanges = [];
+
     const marks = document.querySelectorAll(".inkloom-mark");
     marks.forEach((mark) => {
       const parent = mark.parentNode;
@@ -699,6 +724,7 @@
     clearHighlights();
     if (!evaluations || evaluations.length === 0) return;
 
+    const overlay = getOrCreateOverlay();
     const editor = findActiveEditor();
     const searchRoot = editor || document.querySelector(
       '.editor-content, .ProseMirror, .wp-block-post-content, .w-richtext, #liveEditor, .editor-box, article, main'
@@ -706,11 +732,11 @@
 
     evaluations.forEach((issue) => {
       if (!issue.claim) return;
-      highlightPhraseInElement(searchRoot, issue);
+      highlightPhraseViaOverlay(searchRoot, issue, overlay);
     });
   }
 
-  function highlightPhraseInElement(root, issue) {
+  function highlightPhraseViaOverlay(root, issue, overlay) {
     const phrase = issue.claim;
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
@@ -719,10 +745,10 @@
         }
         if (
           node.parentElement &&
-          (node.parentElement.closest(".inkloom-mark") ||
-            node.parentElement.closest(".inkloom-floating-pill") ||
-            node.parentElement.closest(".inkloom-inpage-popup") ||
-            node.parentElement.closest(".inkloom-tooltip-portal") ||
+          (node.parentElement.closest("#inkloom-floating-pill") ||
+            node.parentElement.closest("#inkloom-inpage-popup") ||
+            node.parentElement.closest("#inkloom-tooltip-portal") ||
+            node.parentElement.closest("#inkloom-highlights-overlay") ||
             node.parentElement.tagName === "SCRIPT" ||
             node.parentElement.tagName === "STYLE")
         ) {
@@ -739,40 +765,80 @@
 
     textNodes.forEach((node) => {
       const nodeTextLower = node.textContent.toLowerCase();
-      const idx = nodeTextLower.indexOf(phrase.toLowerCase());
-      if (idx === -1) return;
+      let searchIdx = 0;
 
-      try {
-        // Safe W3C DOM text node splitting
-        const matchedNode = node.splitText(idx);
-        matchedNode.splitText(phrase.length);
+      while (searchIdx < nodeTextLower.length) {
+        const idx = nodeTextLower.indexOf(phrase.toLowerCase(), searchIdx);
+        if (idx === -1) break;
 
-        const mark = document.createElement("span");
-        mark.className = `inkloom-mark inkloom-${issue.severity || 'warning'}`;
-        mark.dataset.claim = issue.claim;
-        mark.dataset.citation = issue.citation;
-        mark.dataset.issue = issue.issue;
-        mark.dataset.rewrite = issue.suggested_rewrite;
-        mark.dataset.severity = issue.severity || "warning";
-        mark.textContent = matchedNode.textContent;
+        try {
+          const range = document.createRange();
+          range.setStart(node, idx);
+          range.setEnd(node, idx + phrase.length);
 
-        mark.addEventListener("mouseenter", () => showTooltip(mark, issue));
-        mark.addEventListener("click", (e) => {
-          e.stopPropagation();
-          showTooltip(mark, issue);
-        });
+          const clientRects = range.getClientRects();
+          for (let i = 0; i < clientRects.length; i++) {
+            const rect = clientRects[i];
+            if (rect.width === 0 || rect.height === 0) continue;
 
-        matchedNode.parentNode.replaceChild(mark, matchedNode);
-      } catch (err) {
-        console.warn("[Inkloom] Highlighting failed on node:", err);
+            const markPill = document.createElement("div");
+            markPill.className = `inkloom-overlay-mark inkloom-${issue.severity || 'warning'}`;
+            markPill.style.position = "absolute";
+            markPill.style.top = `${rect.top + window.scrollY}px`;
+            markPill.style.left = `${rect.left + window.scrollX}px`;
+            markPill.style.width = `${rect.width}px`;
+            markPill.style.height = `${rect.height}px`;
+            markPill.style.borderBottom = `2.5px wavy ${issue.severity === 'high' ? '#EF4444' : '#F59E0B'}`;
+            markPill.style.backgroundColor =
+              issue.severity === 'high' ? 'rgba(239, 68, 68, 0.16)' : 'rgba(245, 158, 11, 0.16)';
+            markPill.style.pointerEvents = "auto";
+            markPill.style.cursor = "pointer";
+            markPill.style.zIndex = "2147483640";
+            markPill.title = `Inkloom: ${issue.issue}`;
+
+            // Save for re-positioning on scroll
+            trackedTextRanges.push({ range, element: markPill, issue });
+
+            // Hook hover tooltip
+            markPill.addEventListener("mouseenter", () => showTooltipAtRect(rect, issue));
+            markPill.addEventListener("click", (e) => {
+              e.stopPropagation();
+              showTooltipAtRect(rect, issue);
+            });
+
+            overlay.appendChild(markPill);
+          }
+        } catch (err) {
+          console.warn("[Inkloom] Highlighting range error:", err);
+        }
+
+        searchIdx = idx + phrase.length;
       }
     });
   }
 
-  function showTooltip(mark, issue) {
+  function repositionHighlights() {
+    if (trackedTextRanges.length === 0) return;
+    for (const item of trackedTextRanges) {
+      try {
+        const rects = item.range.getClientRects();
+        if (rects.length > 0) {
+          const r = rects[0];
+          item.element.style.top = `${r.top + window.scrollY}px`;
+          item.element.style.left = `${r.left + window.scrollX}px`;
+          item.element.style.width = `${r.width}px`;
+          item.element.style.height = `${r.height}px`;
+        }
+      } catch {}
+    }
+  }
+
+  window.addEventListener("scroll", repositionHighlights, { passive: true });
+  window.addEventListener("resize", repositionHighlights, { passive: true });
+
+  function showTooltipAtRect(rect, issue) {
     removeTooltip();
 
-    const rect = mark.getBoundingClientRect();
     const tooltip = document.createElement("div");
     tooltip.className = "inkloom-tooltip-portal";
     tooltip.id = "inkloom-tooltip-portal";
@@ -832,7 +898,12 @@
   }
 
   document.addEventListener("click", (e) => {
-    if (activeTooltip && !activeTooltip.contains(e.target) && !e.target.closest(".inkloom-mark")) {
+    if (
+      activeTooltip &&
+      !activeTooltip.contains(e.target) &&
+      !e.target.closest(".inkloom-overlay-mark") &&
+      !e.target.closest(".inkloom-mark")
+    ) {
       removeTooltip();
     }
   });
@@ -845,7 +916,7 @@
     if (realtimeDebounceTimer) clearTimeout(realtimeDebounceTimer);
     realtimeDebounceTimer = setTimeout(() => {
       runAudit(true);
-    }, 400); // 400ms debounce
+    }, 300); // 300ms responsive debounce
   }
 
   document.addEventListener("focusin", (e) => {
@@ -873,40 +944,54 @@
 
   function executeRewrite(claim, rewrite) {
     let replaced = false;
+    const editor = findActiveEditor();
 
-    // A. Replace mark node directly if present
-    const marks = Array.from(document.querySelectorAll(".inkloom-mark"));
-    const targetMark = marks.find(
-      (m) =>
-        m.dataset.claim?.toLowerCase() === claim.toLowerCase() ||
-        (m.textContent && m.textContent.toLowerCase().includes(claim.toLowerCase()))
-    );
+    // Strategy 1: Check active focused selection or range replacement
+    if (editor) {
+      editor.focus();
+      const regex = new RegExp(claim.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"), "i");
+      const currentText = editor.innerText || editor.value || "";
 
-    if (targetMark && targetMark.parentNode) {
-      const textNode = document.createTextNode(rewrite);
-      const parentEditable =
-        targetMark.closest('[contenteditable="true"], textarea, input, .ProseMirror') || targetMark.parentNode;
-      targetMark.parentNode.replaceChild(textNode, targetMark);
+      if (regex.test(currentText)) {
+        if (editor.isContentEditable) {
+          // Select and replace via execCommand or innerHTML replacement
+          const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+          while (walker.nextNode()) {
+            const node = walker.currentNode;
+            if (node.textContent && regex.test(node.textContent)) {
+              node.textContent = node.textContent.replace(regex, rewrite);
+              replaced = true;
+              break;
+            }
+          }
 
-      if (parentEditable) {
-        parentEditable.dispatchEvent(new Event("input", { bubbles: true }));
-        parentEditable.dispatchEvent(new Event("change", { bubbles: true }));
-        parentEditable.classList.add("inkloom-repaired-pulse");
-        setTimeout(() => parentEditable.classList.remove("inkloom-repaired-pulse"), 1500);
+          if (!replaced) {
+            editor.innerHTML = editor.innerHTML.replace(regex, rewrite);
+            replaced = true;
+          }
+
+          editor.dispatchEvent(new Event("input", { bubbles: true }));
+          editor.dispatchEvent(new Event("change", { bubbles: true }));
+          editor.classList.add("inkloom-repaired-pulse");
+          setTimeout(() => editor.classList.remove("inkloom-repaired-pulse"), 1500);
+        } else if (editor.value) {
+          editor.value = editor.value.replace(regex, rewrite);
+          editor.dispatchEvent(new Event("input", { bubbles: true }));
+          editor.dispatchEvent(new Event("change", { bubbles: true }));
+          editor.classList.add("inkloom-repaired-pulse");
+          setTimeout(() => editor.classList.remove("inkloom-repaired-pulse"), 1500);
+          replaced = true;
+        }
       }
-      replaced = true;
     }
 
-    // B. Search inside active editor or contenteditable containers
+    // Strategy 2: Deep search across all page editables
     if (!replaced) {
-      const editor = findActiveEditor();
-      const editables = editor
-        ? [editor]
-        : Array.from(
-            document.querySelectorAll(
-              '[contenteditable="true"], .ProseMirror, textarea, input, .editor-content, #liveEditor, .editor-box'
-            )
-          );
+      const editables = Array.from(
+        document.querySelectorAll(
+          '[contenteditable="true"], .ProseMirror, textarea, input, .editor-content, #liveEditor, .editor-box'
+        )
+      );
 
       for (const ed of editables) {
         const regex = new RegExp(claim.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"), "i");
@@ -930,7 +1015,7 @@
       }
     }
 
-    // Immediately trigger a real-time re-audit pass to refresh highlights and score
+    // Trigger immediate re-audit to clear highlights and update score
     scheduleRealtimeAudit();
 
     return replaced;
