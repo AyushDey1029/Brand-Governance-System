@@ -1,93 +1,16 @@
-<!DOCTYPE html>
-<html lang="en" class="dark" data-accent="indigo">
+<!doctype html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234F46E5'><circle cx='12' cy='12' r='10'/><circle cx='16' cy='8' r='3' fill='%2306B6D4'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Inkloom — Multi-Tenant AI Brand Governance Platform</title>
-
-    <!-- Google Fonts for cinematic editorial UI -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
-      rel="stylesheet"
-    />
-
-    <!-- Synchronous early theme bootstrap to eliminate Flash of Wrong Theme (FOUC) -->
-    <script>
-      (function () {
-        try {
-          var VALID_MODES = ["dark", "light", "system"];
-          var VALID_ACCENTS = ["indigo", "violet", "ocean", "emerald", "rose", "amber", "teal"];
-          var VALID_PRESETS = ["aurora", "midnight", "nebula", "oceanic", "minimal"];
-          var VALID_TRANSLUCENCY = ["solid", "medium", "heavy"];
-          var VALID_MOTION = ["paused", "gentle", "normal", "vibrant"];
-
-          var mode = localStorage.getItem("inkloom_theme_mode");
-          if (!mode || VALID_MODES.indexOf(mode) === -1) {
-            mode = "dark";
-          }
-
-          var accent = localStorage.getItem("inkloom_accent_color");
-          if (!accent || VALID_ACCENTS.indexOf(accent) === -1) {
-            accent = "indigo";
-          }
-
-          var preset = localStorage.getItem("inkloom_visual_preset");
-          if (!preset || VALID_PRESETS.indexOf(preset) === -1) {
-            preset = "midnight";
-          }
-
-          var translucency = localStorage.getItem("inkloom_surface_translucency");
-          if (!translucency || VALID_TRANSLUCENCY.indexOf(translucency) === -1) {
-            translucency = "medium";
-          }
-
-          var motion = localStorage.getItem("inkloom_motion_intensity");
-          if (!motion || VALID_MOTION.indexOf(motion) === -1) {
-            motion = "normal";
-          }
-
-          var ambientMotion = localStorage.getItem("inkloom_ambient_motion");
-          var motionEnabled = ambientMotion !== null ? ambientMotion === "true" : true;
-          if (motion === "paused") motionEnabled = false;
-
-          var effectiveMode = mode;
-          if (mode === "system") {
-            var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-            effectiveMode = prefersDark ? "dark" : "light";
-          }
-
-          var root = document.documentElement;
-          root.classList.remove("light", "dark");
-          root.classList.add(effectiveMode);
-          root.style.colorScheme = effectiveMode;
-          root.setAttribute("data-accent", accent);
-          root.setAttribute("data-theme-preference", mode);
-          root.setAttribute("data-theme-resolved", effectiveMode);
-          root.setAttribute("data-ambient-motion", motionEnabled ? "on" : "off");
-          root.setAttribute("data-preset", preset);
-          root.setAttribute("data-translucency", translucency);
-          root.setAttribute("data-motion-intensity", motion);
-          root.setAttribute("data-page-visible", typeof document !== "undefined" && !document.hidden ? "true" : "false");
-        } catch (e) {
-          // Graceful fallback for restricted/sandboxed browser environments
-          document.documentElement.classList.add("dark");
-          document.documentElement.style.colorScheme = "dark";
-          document.documentElement.setAttribute("data-accent", "indigo");
-          document.documentElement.setAttribute("data-theme-preference", "dark");
-          document.documentElement.setAttribute("data-theme-resolved", "dark");
-          document.documentElement.setAttribute("data-ambient-motion", "on");
-          document.documentElement.setAttribute("data-preset", "midnight");
-          document.documentElement.setAttribute("data-translucency", "medium");
-          document.documentElement.setAttribute("data-motion-intensity", "normal");
-          document.documentElement.setAttribute("data-page-visible", "true");
-        }
-      })();
-    </script>
+    <title>Inkloom AI — Brand Governance Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
   </head>
-  <body class="bg-[var(--bg-app)] text-[var(--text-primary)] antialiased min-h-screen">
+  <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
