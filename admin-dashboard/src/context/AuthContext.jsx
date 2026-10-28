@@ -176,9 +176,14 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await signOutUser();
+    try {
+      await signOutUser();
+    } catch (_) {}
     setUser(null);
     setSession(null);
+    localStorage.removeItem('inkloom_active_user');
+    localStorage.removeItem('inkloom_access_token');
+    localStorage.removeItem('inkloom_refresh_token');
   };
 
   const isAdmin = user?.role === 'admin' || user?.role === 'reviewer';

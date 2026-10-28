@@ -2,6 +2,891 @@
 @tailwind components;
 @tailwind utilities;
 
+
+/* ==============================================================================
+   Inkloom Design Tokens System
+   Appearance: Light / Dark Mode
+   Accent Themes: Indigo (Default), Violet, Ocean Blue, Emerald, Rose, Amber, Teal
+   ============================================================================== */
+
+:root {
+  /* Default: Dark Mode & Inkloom Sunset Orange Accent (Matching Landing Page) */
+  color-scheme: dark;
+
+  /* Surfaces - Warm Obsidian & Ember Charcoal */
+  --bg-app: #0d0a11;
+  --bg-surface: #17121c;
+  --bg-surface-elevated: #221a28;
+  --bg-surface-subtle: #1b1422;
+  --bg-sidebar: #120e18;
+  --bg-sidebar-card: #191321;
+  --bg-sidebar-item-hover: rgba(255, 255, 255, 0.05);
+  --border-sidebar: rgba(255, 255, 255, 0.08);
+  --bg-header: rgba(18, 14, 24, 0.88);
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.20);
+
+  /* Typography */
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-inverse: #0d0a11;
+
+  /* Semantic Status Colors (Constant across all themes) */
+  --color-success-bg: rgba(16, 185, 129, 0.14);
+  --color-success-border: rgba(16, 185, 129, 0.35);
+  --color-success-text: #34d399;
+  --color-success-solid: #10b981;
+
+  --color-warning-bg: rgba(245, 158, 11, 0.14);
+  --color-warning-border: rgba(245, 158, 11, 0.35);
+  --color-warning-text: #fbbf24;
+  --color-warning-solid: #f59e0b;
+
+  --color-danger-bg: rgba(244, 63, 94, 0.14);
+  --color-danger-border: rgba(244, 63, 94, 0.35);
+  --color-danger-text: #fb7185;
+  --color-danger-solid: #f43f5e;
+
+  --color-info-bg: rgba(56, 189, 248, 0.14);
+  --color-info-border: rgba(56, 189, 248, 0.35);
+  --color-info-text: #38bdf8;
+  --color-info-solid: #0ea5e9;
+
+  /* Default Accent: Sunset Ember Orange (#F26A0F) matching Landing Page */
+  --accent-primary: #f26a0f;
+  --accent-hover: #ff7a1a;
+  --accent-active: #d95405;
+  --accent-subtle: rgba(242, 106, 15, 0.15);
+  --accent-border: rgba(242, 106, 15, 0.35);
+  --accent-text: #fed7aa;
+  --accent-contrast: #ffffff;
+  --accent-ring: rgba(242, 106, 15, 0.40);
+
+  /* Ambient Atmospheric Tinting */
+  --ambient-glow-1: rgba(242, 106, 15, 0.22);
+  --ambient-glow-2: rgba(180, 50, 10, 0.18);
+  --ambient-glow-3: rgba(254, 215, 170, 0.08);
+
+  /* Data Visualization & Charts */
+  --chart-primary: var(--accent-primary);
+  --chart-secondary: #fb923c;
+  --chart-tertiary: #fdba74;
+  --chart-success: var(--color-success-solid);
+  --chart-warning: var(--color-warning-solid);
+  --chart-danger: var(--color-danger-solid);
+  --chart-grid: rgba(255, 255, 255, 0.08);
+  --chart-tooltip-bg: var(--bg-surface-elevated);
+  --chart-tooltip-border: var(--border-default);
+}
+
+/* ------------------------------------------------------------------------------
+   1. Mode: Light Mode (Sophisticated Warm-White / Neutral Surfaces)
+   ------------------------------------------------------------------------------ */
+html.light {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg-app: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #ffffff;
+  --bg-surface-subtle: #f1f5f9;
+  --bg-sidebar: #f1f5f9;
+  --bg-sidebar-card: #ffffff;
+  --bg-sidebar-item-hover: #e2e8f0;
+  --border-sidebar: #e2e8f0;
+  --bg-header: rgba(255, 255, 255, 0.85);
+
+  /* Borders */
+  --border-subtle: #f1f5f9;
+  --border-default: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* Typography */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-inverse: #ffffff;
+
+  /* Semantic Status Colors (Light Mode) */
+  --color-success-bg: #ecfdf5;
+  --color-success-border: #a7f3d0;
+  --color-success-text: #047857;
+  --color-success-solid: #059669;
+
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #fde68a;
+  --color-warning-text: #b45309;
+  --color-warning-solid: #d97706;
+
+  --color-danger-bg: #fff1f2;
+  --color-danger-border: #fecdd3;
+  --color-danger-text: #be123c;
+  --color-danger-solid: #e11d48;
+
+  --color-info-bg: #f0f9ff;
+  --color-info-border: #bae6fd;
+  --color-info-text: #0369a1;
+  --color-info-solid: #0284c7;
+
+  /* Default Light Accent: Indigo */
+  --accent-primary: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-active: #3730a3;
+  --accent-subtle: #eef2ff;
+  --accent-border: #c7d2fe;
+  --accent-text: #4338ca;
+  --accent-contrast: #ffffff;
+
+  /* Atmospheric Glow Tokens (Light Mode - Opal, Lavender & Champagne) */
+  --ambient-glow-1: rgba(199, 210, 254, 0.55);
+  --ambient-glow-2: rgba(233, 213, 255, 0.45);
+  --ambient-glow-3: rgba(186, 230, 253, 0.45);
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(226, 232, 240, 0.85);
+  --glass-highlight: rgba(255, 255, 255, 0.95);
+  --glass-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.8);
+
+  /* Data Visualization & Charts */
+  --chart-primary: var(--accent-primary);
+  --chart-secondary: #0284c7;
+  --chart-tertiary: #7e22ce;
+  --chart-success: var(--color-success-solid);
+  --chart-warning: var(--color-warning-solid);
+  --chart-danger: var(--color-danger-solid);
+  --chart-grid: rgba(0, 0, 0, 0.08);
+  --chart-tooltip-bg: var(--bg-surface);
+  --chart-tooltip-border: var(--border-default);
+}
+
+/* ------------------------------------------------------------------------------
+   2. Mode: Dark Mode (Layered Midnight / Deep Slate)
+   ------------------------------------------------------------------------------ */
+html.dark {
+  color-scheme: dark;
+
+  /* Surfaces - Warm Obsidian & Ember Charcoal */
+  --bg-app: #0d0a11;
+  --bg-surface: #17121c;
+  --bg-surface-elevated: #221a28;
+  --bg-surface-subtle: #1b1422;
+  --bg-sidebar: #120e18;
+  --bg-sidebar-card: #191321;
+  --bg-sidebar-item-hover: rgba(255, 255, 255, 0.05);
+  --border-sidebar: rgba(255, 255, 255, 0.08);
+  --bg-header: rgba(18, 14, 24, 0.88);
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.20);
+
+  /* Typography */
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-inverse: #0d0a11;
+
+  /* Semantic Status Colors (Dark Mode) */
+  --color-success-bg: rgba(16, 185, 129, 0.14);
+  --color-success-border: rgba(16, 185, 129, 0.35);
+  --color-success-text: #34d399;
+  --color-success-solid: #10b981;
+
+  --color-warning-bg: rgba(245, 158, 11, 0.14);
+  --color-warning-border: rgba(245, 158, 11, 0.35);
+  --color-warning-text: #fbbf24;
+  --color-warning-solid: #f59e0b;
+
+  --color-danger-bg: rgba(244, 63, 94, 0.14);
+  --color-danger-border: rgba(244, 63, 94, 0.35);
+  --color-danger-text: #fb7185;
+  --color-danger-solid: #f43f5e;
+
+  --color-info-bg: rgba(56, 189, 248, 0.14);
+  --color-info-border: rgba(56, 189, 248, 0.35);
+  --color-info-text: #38bdf8;
+  --color-info-solid: #0ea5e9;
+
+  /* Default Dark Accent: Indigo */
+  --accent-primary: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-active: #4338ca;
+  --accent-subtle: rgba(99, 102, 241, 0.15);
+  --accent-border: rgba(99, 102, 241, 0.35);
+  --accent-text: #a5b4fc;
+  --accent-contrast: #ffffff;
+
+  /* Atmospheric Glow Tokens (Dark Mode - Midnight Indigo, Violet & Cyan) */
+  --ambient-glow-1: rgba(99, 102, 241, 0.16);
+  --ambient-glow-2: rgba(139, 92, 246, 0.14);
+  --ambient-glow-3: rgba(56, 189, 248, 0.10);
+  --glass-bg: rgba(15, 23, 42, 0.70);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.05);
+  --glass-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+
+  /* Data Visualization & Charts */
+  --chart-primary: var(--accent-primary);
+  --chart-secondary: #38bdf8;
+  --chart-tertiary: #a855f7;
+  --chart-success: var(--color-success-solid);
+  --chart-warning: var(--color-warning-solid);
+  --chart-danger: var(--color-danger-solid);
+  --chart-grid: rgba(255, 255, 255, 0.08);
+  --chart-tooltip-bg: var(--bg-surface-elevated);
+  --chart-tooltip-border: var(--border-default);
+}
+
+/* ------------------------------------------------------------------------------
+   3. Accent Palettes - Coordinated Light & Dark Overrides
+   ------------------------------------------------------------------------------ */
+
+/* --- 0. Inkloom Sunset Orange (Default & Landing Page Match) --- */
+html[data-accent="orange"].light, html[data-accent="orange"]:not(.dark) {
+  --accent-primary: #ea580c;
+  --accent-hover: #c2410c;
+  --accent-active: #9a3412;
+  --accent-subtle: #fff7ed;
+  --accent-border: #fed7aa;
+  --accent-text: #c2410c;
+  --accent-ring: rgba(234, 88, 12, 0.35);
+  --ambient-glow-1: rgba(254, 215, 170, 0.70);
+  --ambient-glow-2: rgba(253, 186, 116, 0.55);
+  --ambient-glow-3: rgba(254, 243, 199, 0.45);
+}
+html[data-accent="orange"].dark {
+  --accent-primary: #f26a0f;
+  --accent-hover: #ff7a1a;
+  --accent-active: #d95405;
+  --accent-subtle: rgba(242, 106, 15, 0.16);
+  --accent-border: rgba(242, 106, 15, 0.38);
+  --accent-text: #fed7aa;
+  --accent-ring: rgba(242, 106, 15, 0.45);
+  --ambient-glow-1: rgba(242, 106, 15, 0.24);
+  --ambient-glow-2: rgba(180, 50, 10, 0.20);
+  --ambient-glow-3: rgba(254, 215, 170, 0.08);
+}
+
+/* --- 1. Indigo --- */
+html[data-accent="indigo"].light, html[data-accent="indigo"]:not(.dark) {
+  --accent-primary: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-active: #3730a3;
+  --accent-subtle: #eef2ff;
+  --accent-border: #c7d2fe;
+  --accent-text: #4338ca;
+  --accent-ring: rgba(79, 70, 229, 0.35);
+  --ambient-glow-1: rgba(199, 210, 254, 0.65);
+  --ambient-glow-2: rgba(233, 213, 255, 0.48);
+  --ambient-glow-3: rgba(186, 230, 253, 0.45);
+}
+html[data-accent="indigo"].dark {
+  --accent-primary: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-active: #4338ca;
+  --accent-subtle: rgba(99, 102, 241, 0.15);
+  --accent-border: rgba(99, 102, 241, 0.35);
+  --accent-text: #a5b4fc;
+  --accent-ring: rgba(99, 102, 241, 0.5);
+  --ambient-glow-1: rgba(99, 102, 241, 0.22);
+  --ambient-glow-2: rgba(139, 92, 246, 0.18);
+  --ambient-glow-3: rgba(56, 189, 248, 0.14);
+}
+
+/* --- 2. Violet --- */
+html[data-accent="violet"].light, html[data-accent="violet"]:not(.dark) {
+  --accent-primary: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-active: #5b21b6;
+  --accent-subtle: #f5f3ff;
+  --accent-border: #ddd6fe;
+  --accent-text: #6d28d9;
+  --accent-ring: rgba(124, 58, 237, 0.35);
+  --ambient-glow-1: rgba(221, 214, 254, 0.65);
+  --ambient-glow-2: rgba(243, 232, 255, 0.50);
+  --ambient-glow-3: rgba(199, 210, 254, 0.45);
+}
+html[data-accent="violet"].dark {
+  --accent-primary: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-active: #6d28d9;
+  --accent-subtle: rgba(139, 92, 246, 0.15);
+  --accent-border: rgba(139, 92, 246, 0.35);
+  --accent-text: #c4b5fd;
+  --accent-ring: rgba(139, 92, 246, 0.5);
+  --ambient-glow-1: rgba(139, 92, 246, 0.22);
+  --ambient-glow-2: rgba(192, 132, 252, 0.18);
+  --ambient-glow-3: rgba(99, 102, 241, 0.14);
+}
+
+/* --- 3. Ocean Blue --- */
+html[data-accent="ocean"].light, html[data-accent="ocean"]:not(.dark) {
+  --accent-primary: #0284c7;
+  --accent-hover: #0369a1;
+  --accent-active: #075985;
+  --accent-subtle: #f0f9ff;
+  --accent-border: #bae6fd;
+  --accent-text: #0369a1;
+  --accent-ring: rgba(2, 132, 199, 0.35);
+  --ambient-glow-1: rgba(186, 230, 253, 0.65);
+  --ambient-glow-2: rgba(224, 242, 254, 0.50);
+  --ambient-glow-3: rgba(199, 210, 254, 0.45);
+}
+html[data-accent="ocean"].dark {
+  --accent-primary: #38bdf8;
+  --accent-hover: #0ea5e9;
+  --accent-active: #0284c7;
+  --accent-subtle: rgba(56, 189, 248, 0.15);
+  --accent-border: rgba(56, 189, 248, 0.35);
+  --accent-text: #7dd3fc;
+  --accent-ring: rgba(56, 189, 248, 0.5);
+  --ambient-glow-1: rgba(56, 189, 248, 0.22);
+  --ambient-glow-2: rgba(2, 132, 199, 0.18);
+  --ambient-glow-3: rgba(99, 102, 241, 0.14);
+}
+
+/* --- 4. Emerald --- */
+html[data-accent="emerald"].light, html[data-accent="emerald"]:not(.dark) {
+  --accent-primary: #059669;
+  --accent-hover: #047857;
+  --accent-active: #065f46;
+  --accent-subtle: #ecfdf5;
+  --accent-border: #a7f3d0;
+  --accent-text: #047857;
+  --accent-ring: rgba(5, 150, 105, 0.35);
+  --ambient-glow-1: rgba(167, 243, 208, 0.65);
+  --ambient-glow-2: rgba(209, 250, 229, 0.50);
+  --ambient-glow-3: rgba(186, 230, 253, 0.45);
+}
+html[data-accent="emerald"].dark {
+  --accent-primary: #10b981;
+  --accent-hover: #059669;
+  --accent-active: #047857;
+  --accent-subtle: rgba(16, 185, 129, 0.15);
+  --accent-border: rgba(16, 185, 129, 0.35);
+  --accent-text: #6ee7b7;
+  --accent-ring: rgba(16, 185, 129, 0.5);
+  --ambient-glow-1: rgba(16, 185, 129, 0.20);
+  --ambient-glow-2: rgba(52, 211, 153, 0.16);
+  --ambient-glow-3: rgba(20, 184, 166, 0.14);
+}
+
+/* --- 5. Rose --- */
+html[data-accent="rose"].light, html[data-accent="rose"]:not(.dark) {
+  --accent-primary: #e11d48;
+  --accent-hover: #be123c;
+  --accent-active: #9f1239;
+  --accent-subtle: #fff1f2;
+  --accent-border: #fecdd3;
+  --accent-text: #be123c;
+  --accent-ring: rgba(225, 29, 72, 0.35);
+  --ambient-glow-1: rgba(254, 205, 211, 0.65);
+  --ambient-glow-2: rgba(255, 228, 230, 0.50);
+  --ambient-glow-3: rgba(233, 213, 255, 0.45);
+}
+html[data-accent="rose"].dark {
+  --accent-primary: #fb7185;
+  --accent-hover: #f43f5e;
+  --accent-active: #e11d48;
+  --accent-subtle: rgba(251, 113, 133, 0.15);
+  --accent-border: rgba(251, 113, 133, 0.35);
+  --accent-text: #fda4af;
+  --accent-ring: rgba(251, 113, 133, 0.5);
+  --ambient-glow-1: rgba(251, 113, 133, 0.20);
+  --ambient-glow-2: rgba(244, 63, 94, 0.16);
+  --ambient-glow-3: rgba(168, 85, 247, 0.14);
+}
+
+/* --- 6. Amber --- */
+html[data-accent="amber"].light, html[data-accent="amber"]:not(.dark) {
+  --accent-primary: #d97706;
+  --accent-hover: #b45309;
+  --accent-active: #92400e;
+  --accent-subtle: #fffbeb;
+  --accent-border: #fde68a;
+  --accent-text: #b45309;
+  --accent-ring: rgba(217, 119, 6, 0.35);
+  --ambient-glow-1: rgba(253, 230, 138, 0.65);
+  --ambient-glow-2: rgba(254, 243, 199, 0.50);
+  --ambient-glow-3: rgba(254, 205, 211, 0.45);
+}
+html[data-accent="amber"].dark {
+  --accent-primary: #f59e0b;
+  --accent-hover: #d97706;
+  --accent-active: #b45309;
+  --accent-subtle: rgba(245, 158, 11, 0.15);
+  --accent-border: rgba(245, 158, 11, 0.35);
+  --accent-text: #fcd34d;
+  --accent-ring: rgba(245, 158, 11, 0.5);
+  --ambient-glow-1: rgba(245, 158, 11, 0.20);
+  --ambient-glow-2: rgba(251, 191, 36, 0.16);
+  --ambient-glow-3: rgba(239, 68, 68, 0.12);
+}
+
+/* --- 7. Teal --- */
+html[data-accent="teal"].light, html[data-accent="teal"]:not(.dark) {
+  --accent-primary: #0d9488;
+  --accent-hover: #0f766e;
+  --accent-active: #115e59;
+  --accent-subtle: #f0fdfa;
+  --accent-border: #99f6e4;
+  --accent-text: #0f766e;
+  --accent-ring: rgba(13, 148, 136, 0.35);
+  --ambient-glow-1: rgba(153, 246, 228, 0.65);
+  --ambient-glow-2: rgba(204, 251, 241, 0.50);
+  --ambient-glow-3: rgba(186, 230, 253, 0.45);
+}
+html[data-accent="teal"].dark {
+  --accent-primary: #2dd4bf;
+  --accent-hover: #14b8a6;
+  --accent-active: #0d9488;
+  --accent-subtle: rgba(45, 212, 191, 0.15);
+  --accent-border: rgba(45, 212, 191, 0.35);
+  --accent-text: #5eead4;
+  --accent-ring: rgba(45, 212, 191, 0.5);
+  --ambient-glow-1: rgba(20, 184, 166, 0.20);
+  --ambient-glow-2: rgba(45, 212, 191, 0.16);
+  --ambient-glow-3: rgba(56, 189, 248, 0.14);
+}
+
+/* ==============================================================================
+   Curated Visual Presets (Atmospheric Glow & Ambient Light Fields)
+   - Aurora: Boreal emerald/teal radiance, luminous ribbons
+   - Midnight: Deep charcoal foundation, electric sovereign indigo
+   - Nebula: Cosmic violet/magenta interstellar starlight
+   - Oceanic: Expansive cyan/marine blue abyssal tides
+   - Minimal: Calm architectural slate, restrained low-intensity ambient field
+   ============================================================================== */
+
+/* --- Preset 0: Obsidian Sunset (Signature Landing Page Theme) --- */
+html[data-preset="obsidian"].dark {
+  --ambient-glow-1: rgba(242, 106, 15, 0.28);
+  --ambient-glow-2: rgba(180, 50, 10, 0.22);
+  --ambient-glow-3: rgba(254, 215, 170, 0.12);
+}
+html[data-preset="obsidian"].light, html[data-preset="obsidian"]:not(.dark) {
+  --ambient-glow-1: rgba(254, 215, 170, 0.70);
+  --ambient-glow-2: rgba(253, 186, 116, 0.55);
+  --ambient-glow-3: rgba(254, 243, 199, 0.45);
+}
+
+/* --- Preset 1: Aurora --- */
+html[data-preset="aurora"].dark {
+  --ambient-glow-1: rgba(16, 185, 129, 0.28);
+  --ambient-glow-2: rgba(45, 212, 191, 0.24);
+  --ambient-glow-3: rgba(56, 189, 248, 0.18);
+}
+html[data-preset="aurora"].light, html[data-preset="aurora"]:not(.dark) {
+  --ambient-glow-1: rgba(167, 243, 208, 0.70);
+  --ambient-glow-2: rgba(153, 246, 228, 0.60);
+  --ambient-glow-3: rgba(186, 230, 253, 0.50);
+}
+
+/* --- Preset 2: Midnight (Default) --- */
+html[data-preset="midnight"].dark {
+  --ambient-glow-1: rgba(99, 102, 241, 0.22);
+  --ambient-glow-2: rgba(139, 92, 246, 0.18);
+  --ambient-glow-3: rgba(56, 189, 248, 0.14);
+}
+html[data-preset="midnight"].light, html[data-preset="midnight"]:not(.dark) {
+  --ambient-glow-1: rgba(199, 210, 254, 0.65);
+  --ambient-glow-2: rgba(233, 213, 255, 0.48);
+  --ambient-glow-3: rgba(186, 230, 253, 0.45);
+}
+
+/* --- Preset 3: Nebula --- */
+html[data-preset="nebula"].dark {
+  --ambient-glow-1: rgba(168, 85, 247, 0.26);
+  --ambient-glow-2: rgba(236, 72, 153, 0.20);
+  --ambient-glow-3: rgba(99, 102, 241, 0.18);
+}
+html[data-preset="nebula"].light, html[data-preset="nebula"]:not(.dark) {
+  --ambient-glow-1: rgba(243, 232, 255, 0.75);
+  --ambient-glow-2: rgba(252, 231, 243, 0.65);
+  --ambient-glow-3: rgba(224, 231, 255, 0.50);
+}
+
+/* --- Preset 4: Oceanic --- */
+html[data-preset="oceanic"].dark {
+  --ambient-glow-1: rgba(14, 165, 233, 0.26);
+  --ambient-glow-2: rgba(6, 182, 212, 0.22);
+  --ambient-glow-3: rgba(30, 64, 175, 0.24);
+}
+html[data-preset="oceanic"].light, html[data-preset="oceanic"]:not(.dark) {
+  --ambient-glow-1: rgba(186, 230, 253, 0.75);
+  --ambient-glow-2: rgba(207, 250, 254, 0.65);
+  --ambient-glow-3: rgba(199, 210, 254, 0.50);
+}
+
+/* --- Preset 5: Minimal --- */
+html[data-preset="minimal"].dark {
+  --ambient-glow-1: rgba(148, 163, 184, 0.08);
+  --ambient-glow-2: rgba(100, 116, 139, 0.06);
+  --ambient-glow-3: rgba(71, 85, 105, 0.05);
+}
+html[data-preset="minimal"].light, html[data-preset="minimal"]:not(.dark) {
+  --ambient-glow-1: rgba(226, 232, 240, 0.40);
+  --ambient-glow-2: rgba(241, 245, 249, 0.35);
+  --ambient-glow-3: rgba(248, 250, 252, 0.30);
+}
+
+/* ==============================================================================
+   Surface Translucency System (Solid / Medium / Heavy)
+   Controls glassmorphism opacity, blur level, and surface lighting absorption
+   ============================================================================== */
+
+/* Solid: Crisp, opaque high-contrast surfaces without background blur */
+html[data-translucency="solid"].dark {
+  --glass-bg: #0f172a;
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+html[data-translucency="solid"].light, html[data-translucency="solid"]:not(.dark) {
+  --glass-bg: #ffffff;
+  --glass-border: #e2e8f0;
+  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+html[data-translucency="solid"] .surface-glass {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Medium: Balanced modern frosted glass with optical clarity (Default) */
+html[data-translucency="medium"].dark {
+  --glass-bg: rgba(15, 23, 42, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+html[data-translucency="medium"].light, html[data-translucency="medium"]:not(.dark) {
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(226, 232, 240, 0.85);
+  --glass-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.8);
+}
+html[data-translucency="medium"] .surface-glass {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Heavy: Deep cinematic translucency with elevated saturation and deep blur */
+html[data-translucency="heavy"].dark {
+  --glass-bg: rgba(15, 23, 42, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.10);
+}
+html[data-translucency="heavy"].light, html[data-translucency="heavy"]:not(.dark) {
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(226, 232, 240, 0.95);
+  --glass-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.95);
+}
+html[data-translucency="heavy"] .surface-glass {
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+}
+
+/* ==============================================================================
+   Motion Intensity Controls (Paused / Gentle / Normal / Vibrant)
+   ============================================================================== */
+
+html[data-motion-intensity="paused"] .ambient-orb {
+  animation: none !important;
+  transform: none !important;
+}
+
+html[data-motion-intensity="gentle"] .ambient-orb {
+  animation-duration: 44s !important;
+}
+
+html[data-motion-intensity="normal"] .ambient-orb {
+  animation-duration: 25s !important;
+}
+
+html[data-motion-intensity="vibrant"] .ambient-orb {
+  animation-duration: 13s !important;
+}
+
+/* ==============================================================================
+   Base Element Styles & Custom Theme Utilities
+   ============================================================================== */
+
+body {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+/* Typography Enhancements */
+.font-display {
+  font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -0.025em;
+}
+
+.font-mono-code {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-surface-subtle);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
+/* Cinematic Surface & Glassmorphism System */
+.surface-glass {
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+}
+
+.surface-glass-subtle {
+  background-color: var(--bg-surface-subtle);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+}
+
+.surface-glass-highlight::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 5%, var(--glass-highlight) 50%, transparent 95%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Tactile Micro-Interactions */
+.surface-tactile {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease;
+}
+
+.surface-tactile:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-border);
+  box-shadow: 0 14px 30px -8px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--accent-border);
+}
+
+.surface-tactile:active {
+  transform: translateY(0);
+}
+
+/* ==============================================================================
+   Inkloom Microinteraction Utilities
+   Consistent, restrained animations for real user feedback & visual hierarchy
+   ============================================================================== */
+
+.micro-lift {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+.micro-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--accent-border);
+}
+.micro-lift:active {
+  transform: translateY(0);
+}
+
+.interactive-card {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, background-color 0.2s ease;
+}
+.interactive-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--accent-border);
+}
+
+.interactive-row {
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, border-color 0.15s ease;
+}
+.interactive-row:hover {
+  transform: translateX(2px);
+  background-color: var(--bg-surface-subtle);
+}
+
+.interactive-pill {
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.interactive-pill:hover {
+  transform: scale(1.02);
+}
+.interactive-pill:active {
+  transform: scale(0.98);
+}
+
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: none;
+  ring: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+
+/* Subtle Technical Grid Overlay for Cinematic Tech Depth */
+.tech-grid-overlay {
+  background-size: 32px 32px;
+  background-image: radial-gradient(circle, var(--border-subtle) 1px, transparent 1px);
+}
+
+/* Glowing Ambient Status Orb */
+.status-pulse-orb {
+  position: relative;
+}
+.status-pulse-orb::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  background: var(--accent-primary);
+  opacity: 0.4;
+  animation: ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+/* Reusable Theme Token Classes */
+.bg-app-theme {
+  background-color: var(--bg-app);
+}
+.bg-surface-theme {
+  background-color: var(--bg-surface);
+}
+.bg-surface-elevated-theme {
+  background-color: var(--bg-surface-elevated);
+}
+.bg-surface-subtle-theme {
+  background-color: var(--bg-surface-subtle);
+}
+.bg-sidebar-theme {
+  background-color: var(--bg-sidebar);
+}
+.bg-sidebar-card-theme {
+  background-color: var(--bg-sidebar-card);
+}
+.bg-header-theme {
+  background-color: var(--bg-header);
+}
+.border-sidebar-theme {
+  border-color: var(--border-sidebar);
+}
+
+.border-theme-subtle {
+  border-color: var(--border-subtle);
+}
+.border-theme-default {
+  border-color: var(--border-default);
+}
+.border-theme-strong {
+  border-color: var(--border-strong);
+}
+
+.text-theme-primary {
+  color: var(--text-primary);
+}
+.text-theme-secondary {
+  color: var(--text-secondary);
+}
+.text-theme-muted {
+  color: var(--text-muted);
+}
+
+.accent-bg {
+  background-color: var(--accent-primary);
+  color: var(--accent-contrast);
+}
+.accent-bg:hover {
+  background-color: var(--accent-hover);
+}
+.accent-text {
+  color: var(--accent-text);
+}
+.accent-border {
+  border-color: var(--accent-border);
+}
+.accent-subtle-bg {
+  background-color: var(--accent-subtle);
+  color: var(--accent-text);
+  border-color: var(--accent-border);
+}
+
+/* Ambient Background Motion Control & OS Reduced Motion */
+html[data-ambient-motion="off"] .ambient-orb,
+html.reduce-motion .ambient-orb,
+.ambient-motion-disabled .ambient-orb {
+  animation: none !important;
+  transform: none !important;
+}
+
+/* Pause ambient motion when page/tab is hidden or backgrounded */
+html[data-page-visible="false"] .ambient-orb,
+html.page-hidden .ambient-orb {
+  animation-play-state: paused !important;
+}
+
+/* GPU composite & paint containment for high-fps background rendering */
+.ambient-orb {
+  contain: layout paint style;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/* Low-power responsive blur clamping for mobile and tablet hardware */
+@media (max-width: 768px) {
+  .ambient-orb {
+    filter: blur(48px) !important;
+    max-width: 420px !important;
+    max-height: 420px !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .ambient-orb {
+    filter: blur(72px) !important;
+    max-width: 620px !important;
+    max-height: 620px !important;
+  }
+}
+
+/* Accessibility: Respect Reduced Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .ambient-orb {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+
+
+
 /* Inkloom AI Brand Governance Admin Dashboard - Core Design System */
 /* Harmonized with React Bits Grainient: ['#120f17', '#2a0f0a', '#9a3412', '#f97316', '#fed7aa'] */
 :root {

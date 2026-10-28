@@ -1,39 +1,19 @@
 import React from 'react';
 import { 
   Sparkles, 
-  ArrowRight, 
-  ExternalLink, 
   Database, 
   Eye, 
   Lock, 
-  Zap,
-  User
+  Zap
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import './HeroSection.css';
 
 /**
  * Inkloom AI — Refactored Enterprise Hero Section
- * Fully WCAG AA compliant, solid-contrast typography, balanced 72px buttons,
+ * Fully WCAG AA compliant, solid-contrast typography,
  * uniform glass cards, and zero text breaking on key brand tokens.
  */
-export default function HeroSection({ onEnterDemo }) {
-  const { user, isAdmin, openLoginModal, loginAsDemo } = useAuth();
-
-  const handlePrimaryCta = () => {
-    if (user) {
-      onEnterDemo(isAdmin ? 'admin' : 'creator');
-    } else {
-      loginAsDemo('creator');
-      onEnterDemo('creator');
-    }
-  };
-
-  // Determine user display name for dynamic CTA
-  const userFirstName = user?.fullName 
-    ? user.fullName.trim().split(/\s+/)[0] 
-    : (isAdmin ? 'Sarah' : 'Marcus');
-
+export default function HeroSection() {
   const pillarCards = [
     {
       id: 'citations',
@@ -92,56 +72,7 @@ export default function HeroSection({ onEnterDemo }) {
           directly inside creator workflows.
         </p>
 
-        {/* 4. BALANCED CTA BUTTON GROUP */}
-        <div className="hero-actions-cluster">
-          {user ? (
-            <button
-              type="button"
-              className="hero-btn-primary"
-              onClick={handlePrimaryCta}
-              aria-label={`Open Workspace as ${userFirstName}`}
-            >
-              <span>Open Workspace ({userFirstName})</span>
-              <ArrowRight size={18} aria-hidden="true" />
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="hero-btn-primary"
-                onClick={handlePrimaryCta}
-                aria-label="Launch Live Workspace Demo"
-              >
-                <span>Launch Live Workspace Demo</span>
-                <ArrowRight size={18} aria-hidden="true" />
-              </button>
-
-              <button
-                type="button"
-                className="hero-btn-secondary"
-                onClick={() => openLoginModal('creator')}
-                aria-label="Sign In to your workspace account"
-              >
-                <User size={18} aria-hidden="true" />
-                <span>Sign In to Workspace</span>
-              </button>
-            </>
-          )}
-
-          {/* Secondary Ghost CTA */}
-          <a
-            href="/test-draft"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hero-btn-secondary"
-            aria-label="Open In-Context CMS test page in a new tab"
-          >
-            <span>Try In-Context CMS Draft</span>
-            <ExternalLink size={17} aria-hidden="true" />
-          </a>
-        </div>
-
-        {/* 5. UNIFORM FEATURE / PILLAR CARDS GRID */}
+        {/* 4. UNIFORM FEATURE / PILLAR CARDS GRID */}
         <div className="hero-pillar-cards-grid" role="region" aria-label="Platform Architecture Capabilities">
           {pillarCards.map((card) => {
             const Icon = card.icon;

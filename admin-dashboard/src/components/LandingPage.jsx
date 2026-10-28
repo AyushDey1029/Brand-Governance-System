@@ -37,7 +37,7 @@ export default function LandingPage({ onEnterDemo }) {
 
           <h2 className="cta-headline">Experience frictionless brand governance</h2>
           <p className="cta-subheadline">
-            Explore the multi-tenant workspace with pre-populated ground truth data for Nexus Cloud, Aura Health, and Veritas Financial.
+            Explore the enterprise brand governance workspace with pre-populated ground truth data for Nexus Cloud.
           </p>
 
           <div className="bottom-cta-buttons">

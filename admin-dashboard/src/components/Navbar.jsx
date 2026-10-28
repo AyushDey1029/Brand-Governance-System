@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Shield, ArrowRight, User, Menu, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Shield, ArrowRight, User, Menu, X, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
@@ -9,9 +9,31 @@ import './Navbar.css';
  * zero text wrapping, WCAG AA accessibility, and responsive hamburger navigation.
  */
 export default function Navbar({ onEnterDemo }) {
-  const { user, isAdmin, openLoginModal, loginAsDemo } = useAuth();
+  const { user, isAdmin, openLoginModal, loginAsDemo, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('architecture');
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const userChipRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userChipRef.current && !userChipRef.current.contains(e.target)) {
+        setUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLandingSignOut = async () => {
+    setUserDropdownOpen(false);
+    try {
+      await logout();
+      localStorage.removeItem('inkloom_active_user');
+      localStorage.removeItem('inkloom_access_token');
+      localStorage.removeItem('inkloom_refresh_token');
+    } catch (_) {}
+  };
 
   // Track scroll position to update active navigation item
   useEffect(() => {
@@ -110,24 +132,44 @@ export default function Navbar({ onEnterDemo }) {
         {/* GROUP 3: User Chip + CTA */}
         <div className="navbar-actions-group">
           {user ? (
-            <div 
-              className="navbar-user-chip"
-              role="status"
-              aria-label={`Signed in as ${user.fullName || 'User'}, role: ${isAdmin ? 'Brand Administrator' : 'Content Creator'}`}
-              tabIndex={0}
-            >
+            <div className="relative" ref={userChipRef}>
               <div 
-                className={`navbar-user-avatar ${isAdmin ? 'admin' : ''}`} 
-                aria-hidden="true"
+                className="navbar-user-chip cursor-pointer"
+                role="button"
+                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                aria-label={`Signed in as ${user.fullName || 'User'}, role: ${isAdmin ? 'Brand Administrator' : 'Content Creator'}. Click for options.`}
+                aria-expanded={userDropdownOpen}
+                tabIndex={0}
               >
-                {getInitials(user.fullName || user.email)}
+                <div 
+                  className={`navbar-user-avatar ${isAdmin ? 'admin' : ''}`} 
+                  aria-hidden="true"
+                >
+                  {getInitials(user.fullName || user.email)}
+                </div>
+                <span className="navbar-user-name" title={user.fullName || user.email}>
+                  {user.fullName || 'Sarah Chen'}
+                </span>
+                <span className={`navbar-user-badge ${isAdmin ? 'admin' : ''}`}>
+                  {isAdmin ? 'Brand Admin' : 'Creator'}
+                </span>
               </div>
-              <span className="navbar-user-name" title={user.fullName || user.email}>
-                {user.fullName || 'Sarah Chen'}
-              </span>
-              <span className={`navbar-user-badge ${isAdmin ? 'admin' : ''}`}>
-                {isAdmin ? 'Brand Admin' : 'Creator'}
-              </span>
+
+              {userDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-[#18121f] border border-[var(--ink-nav-border)] rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="px-3 py-1.5 text-xs text-white/60 border-b border-white/10 mb-1 truncate font-sans">
+                    {user.email || 'user@inkloom.internal'}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLandingSignOut}
+                    className="w-full text-left px-3 py-2 text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+                  >
+                    <LogOut size={14} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <button

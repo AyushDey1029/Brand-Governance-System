@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Activity, RefreshCw, User, LogOut, ChevronDown, Sparkles, Crown, ArrowLeftRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-export default function Header({ currentTitle, apiStatus, onRefreshStatus, checking, onGoHome }) {
+export default function Header({ currentTitle, apiStatus = {}, onRefreshStatus, checking, onGoHome }) {
   const { user, isAdmin, switchRole, logout, openLoginModal } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -19,7 +19,12 @@ export default function Header({ currentTitle, apiStatus, onRefreshStatus, check
 
   const handleSignOut = async () => {
     setMenuOpen(false);
-    await logout();
+    try {
+      await logout();
+    } catch (_) {}
+    localStorage.removeItem('inkloom_active_user');
+    localStorage.removeItem('inkloom_access_token');
+    localStorage.removeItem('inkloom_refresh_token');
     if (onGoHome) onGoHome();
   };
 
@@ -57,11 +62,11 @@ export default function Header({ currentTitle, apiStatus, onRefreshStatus, check
         {/* Backend Status Pill */}
         <div className="api-status-pill">
           <span 
-            className={`status-indicator-dot ${apiStatus.connected ? 'online' : 'offline'}`}
+            className={`status-indicator-dot ${apiStatus?.connected ? 'online' : 'offline'}`}
           />
           <span>
-            {apiStatus.connected 
-              ? `API Online (${apiStatus.version || 'v0.1.0'})` 
+            {apiStatus?.connected 
+              ? `API Online (${apiStatus?.version || 'v0.1.0'})` 
               : 'API Offline (127.0.0.1:8000)'}
           </span>
           <button 
