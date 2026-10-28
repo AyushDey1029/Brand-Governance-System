@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Database, Plus, Search, Trash2, Edit2, UploadCloud, CheckCircle } from 'lucide-react';
+import { Database, Plus, Search, Trash2, Edit2, UploadCloud, CheckCircle, Crown, Lock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function GoldenFactsManager({ facts, setFacts, onNotify }) {
+  const { isAdmin } = useAuth();
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [newFact, setNewFact] = useState({
@@ -73,15 +75,23 @@ export default function GoldenFactsManager({ facts, setFacts, onNotify }) {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="btn-secondary" onClick={handleSimulateCSV} title="Upload CSV/Excel Spreadsheet">
-            <UploadCloud size={16} />
-            <span>Import CSV/Excel</span>
-          </button>
-          <button className="btn-primary" onClick={() => setShowModal(true)}>
-            <Plus size={16} />
-            <span>Add Golden Fact</span>
-          </button>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          {isAdmin ? (
+            <>
+              <button className="btn-secondary" onClick={handleSimulateCSV} title="Upload CSV/Excel Spreadsheet">
+                <UploadCloud size={16} />
+                <span>Import CSV/Excel</span>
+              </button>
+              <button className="btn-primary" onClick={() => setShowModal(true)}>
+                <Plus size={16} />
+                <span>Add Golden Fact</span>
+              </button>
+            </>
+          ) : (
+            <span className="badge badge-cyan" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <Lock size={11} /> Verified Facts (Read-Only)
+            </span>
+          )}
         </div>
       </div>
 
@@ -135,13 +145,17 @@ export default function GoldenFactsManager({ facts, setFacts, onNotify }) {
                   </span>
                 </td>
                 <td>
-                  <button 
-                    className="btn-danger" 
-                    onClick={() => handleDelete(item.id)}
-                    title="Remove Fact"
-                  >
-                    <Trash2 size={13} />
-                  </button>
+                  {isAdmin ? (
+                    <button 
+                      className="btn-danger" 
+                      onClick={() => handleDelete(item.id)}
+                      title="Remove Fact (Brand Admin)"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  ) : (
+                    <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>Locked</span>
+                  )}
                 </td>
               </tr>
             ))}

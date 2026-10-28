@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { ShieldAlert, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { ShieldAlert, Plus, Trash2, AlertCircle, Crown, Lock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function PolicyRulesManager({ policies, setPolicies, onNotify }) {
+  const { isAdmin } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [newRule, setNewRule] = useState({
     bannedTerm: '',
@@ -42,10 +44,16 @@ export default function PolicyRulesManager({ policies, setPolicies, onNotify }) 
           </p>
         </div>
 
-        <button className="btn-primary" onClick={() => setShowModal(true)}>
-          <Plus size={16} />
-          <span>Add Disallowed Term</span>
-        </button>
+        {isAdmin ? (
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
+            <Plus size={16} />
+            <span>Add Disallowed Term</span>
+          </button>
+        ) : (
+          <span className="badge badge-amber" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <Lock size={11} /> Enforced Policies (Read-Only)
+          </span>
+        )}
       </div>
 
       <div style={{ overflowX: 'auto' }}>
@@ -84,13 +92,17 @@ export default function PolicyRulesManager({ policies, setPolicies, onNotify }) 
                 </td>
                 <td style={{ fontSize: '12.5px' }}>{p.reason}</td>
                 <td>
-                  <button 
-                    className="btn-danger"
-                    onClick={() => handleDelete(p.id)}
-                    title="Remove Rule"
-                  >
-                    <Trash2 size={13} />
-                  </button>
+                  {isAdmin ? (
+                    <button 
+                      className="btn-danger"
+                      onClick={() => handleDelete(p.id)}
+                      title="Remove Rule (Brand Admin)"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  ) : (
+                    <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>Locked</span>
+                  )}
                 </td>
               </tr>
             ))}

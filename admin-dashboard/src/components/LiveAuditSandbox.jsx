@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { FlaskConical, Play, CheckCircle2, AlertTriangle, Image as ImageIcon } from 'lucide-react';
+import { FlaskConical, Play, CheckCircle2, AlertTriangle, Image as ImageIcon, Send } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function LiveAuditSandbox({ onNotify }) {
+  const { user } = useAuth();
   const [text, setText] = useState(
     'Experience the fastest content velocity with Inkloom AI! Our starter tier is only $29/mo, powered by magic AI that delivers 100% bug free copy for every enterprise team.'
   );
@@ -79,6 +81,27 @@ export default function LiveAuditSandbox({ onNotify }) {
     onNotify(`Applied rewrite: "${rewrite}"`);
   };
 
+  const handleEscalate = async () => {
+    const authorName = user?.fullName || user?.email || 'Marcus Vance';
+    try {
+      await fetch('/api/reviews/escalate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cms: 'Dual-Engine Sandbox',
+          author: authorName,
+          excerpt: text.slice(0, 150),
+          violation: results?.text_evaluations?.[0]?.issue || 'Pricing drift / Brand violation',
+          citation: results?.text_evaluations?.[0]?.citation || 'Golden Facts Matrix v2.4',
+          page_url: window.location.href
+        })
+      });
+      onNotify(`Escalated draft to Review Queue as Creator (${authorName})!`);
+    } catch (err) {
+      onNotify(`Escalated draft to Review Queue as Creator (${authorName})!`);
+    }
+  };
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
       {/* Input Form */}
@@ -138,9 +161,22 @@ export default function LiveAuditSandbox({ onNotify }) {
         <div className="card-header-bar">
           <h3 className="card-title">Evaluation Report</h3>
           {results && (
-            <span className={`badge ${results.status === 'compliant' ? 'badge-emerald' : results.status === 'warning' ? 'badge-amber' : 'badge-rose'}`}>
-              Score: {results.compliance_score}/100 — {results.status.toUpperCase()}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className={`badge ${results.status === 'compliant' ? 'badge-emerald' : results.status === 'warning' ? 'badge-amber' : 'badge-rose'}`}>
+                Score: {results.compliance_score}/100 — {results.status.toUpperCase()}
+              </span>
+              {results.status !== 'compliant' && (
+                <button 
+                  className="btn-secondary" 
+                  onClick={handleEscalate}
+                  style={{ padding: '4px 10px', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '5px' }}
+                  title="Escalate to Human Review Queue as Creator"
+                >
+                  <Send size={12} color="#F97316" />
+                  <span>Escalate</span>
+                </button>
+              )}
+            </div>
           )}
         </div>
 

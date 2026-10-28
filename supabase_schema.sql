@@ -242,3 +242,56 @@ CREATE POLICY "Allow anon write review_queue" ON public.review_queue FOR ALL TO 
 
 CREATE POLICY "Allow anon read brand_palettes" ON public.brand_palettes FOR SELECT TO anon USING (true);
 CREATE POLICY "Allow anon write brand_palettes" ON public.brand_palettes FOR ALL TO anon USING (true);
+
+-- ============================================================================
+-- 8. TABLE: profiles (Public User Identity & RBAC Linked to Supabase Auth)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255),
+    role VARCHAR(64) DEFAULT 'creator',         -- 'creator', 'reviewer', 'admin'
+    workspace VARCHAR(128) DEFAULT 'Acme Brand v2',
+    avatar_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles (email);
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles (role);
+
+ALTER TABLE public.review_queue 
+ADD COLUMN IF NOT EXISTS author_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+-- Automatic Trigger: Inserts a public profile whenever a user registers in auth.users
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.profiles (id, email, full_name, role, workspace)
+    VALUES (
+        NEW.id,
+        NEW.email,
+        COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
+        COALESCE(NEW.raw_user_meta_data->>'role', 'creator'),
+        COALESCE(NEW.raw_user_meta_data->>'workspace', 'Acme Brand v2')
+    )
+    ON CONFLICT (id) DO UPDATE SET
+        email = EXCLUDED.email,
+        full_name = EXCLUDED.full_name,
+        role = EXCLUDED.role,
+        updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT OR UPDATE ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Users can update their own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Allow anon insert profiles" ON public.profiles FOR INSERT TO anon WITH CHECK (true);
+
