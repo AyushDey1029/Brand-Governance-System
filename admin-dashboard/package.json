@@ -1,19 +1,23 @@
 {
   "name": "admin-dashboard",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "node tests/test_theme_persistence.cjs && node tests/test_sidebar_navigation.cjs && node tests/test_theme_full_matrix.cjs && node tests/test_animated_background.cjs && node tests/test_creator_studio_redesign.cjs && node tests/test_microinteractions.cjs && node tests/test_theme_playground.cjs && node tests/test_pages_visual_direction.cjs && node tests/test_visual_accessibility_performance_review.cjs",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
+    "clsx": "^2.1.1",
     "lucide-react": "^1.61.0",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "tailwind-merge": "^3.7.0",
+    "typescript": "^7.0.2"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
