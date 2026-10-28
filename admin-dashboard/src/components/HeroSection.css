@@ -1,0 +1,384 @@
+/* ==========================================================================
+   INKLOOM AI — HERO SECTION DESIGN TOKENS & STYLES
+   Theme: Obsidian & Sunset Ember
+   Accessibility: WCAG AA Compliant (Contrast >= 4.5:1)
+   Spacing Scale: 4px / 8px / 12px / 16px / 20px / 24px / 32px / 48px
+   ========================================================================== */
+
+:root {
+  /* Colors */
+  --hero-color-orange: #F26A0F;
+  --hero-color-orange-hover: #FF7A1A;
+  --hero-color-orange-active: #D95405;
+  --hero-color-accent: #FFB067;
+  --hero-color-accent-subtle: #FFD9B0;
+  --hero-color-accent-border: rgba(255, 176, 103, 0.60);
+
+  /* Typography Colors */
+  --hero-text-primary: #FFFFFF;
+  --hero-text-body: rgba(255, 255, 255, 0.92);
+  --hero-text-muted: rgba(255, 255, 255, 0.75);
+  --hero-text-dark: #1A0D0A; /* 7.8:1 WCAG contrast on #F26A0F */
+
+  /* Glass Surfaces */
+  --hero-badge-bg: rgba(20, 10, 8, 0.75);
+  --hero-badge-border: rgba(255, 255, 255, 0.12);
+  --hero-ghost-bg: rgba(0, 0, 0, 0.25);
+  --hero-ghost-border: rgba(255, 255, 255, 0.45);
+  --hero-ghost-hover-bg: rgba(255, 255, 255, 0.12);
+  --hero-ghost-hover-border: rgba(255, 255, 255, 0.70);
+
+  --hero-card-bg: rgba(20, 10, 8, 0.60);
+  --hero-card-border: rgba(255, 255, 255, 0.10);
+  --hero-card-hover-border: rgba(255, 176, 103, 0.40);
+
+  /* Element Dimensions & Radii */
+  --hero-btn-height: 48px;
+  --hero-btn-radius: 10px;
+  --hero-card-radius: 16px;
+  --hero-pill-radius: 9999px;
+
+  /* Shadows */
+  --hero-shadow-btn: 0 6px 20px rgba(0, 0, 0, 0.30);
+  --hero-shadow-btn-hover: 0 8px 24px rgba(0, 0, 0, 0.38);
+  --hero-shadow-card: 0 8px 24px rgba(0, 0, 0, 0.25);
+  --hero-shadow-card-hover: 0 12px 28px rgba(0, 0, 0, 0.35);
+  --hero-shadow-headline: 0 2px 12px rgba(0, 0, 0, 0.35);
+  --hero-shadow-body: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* 1. Hero Section Wrapper & Scrim */
+.inkloom-hero-section {
+  position: relative;
+  overflow: hidden;
+  padding: 64px 24px 72px 24px;
+}
+
+/* Dark Radial Scrim behind text block for consistent contrast */
+.hero-dark-scrim {
+  display: none;
+}
+
+.hero-shell-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* 2. Top Badge Pill */
+.hero-top-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-radius: var(--hero-pill-radius);
+  background: var(--hero-badge-bg);
+  border: 1px solid var(--hero-badge-border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  margin-bottom: 28px;
+  user-select: none;
+  white-space: nowrap;
+  max-width: 100%;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.badge-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #F2740F;
+  flex-shrink: 0;
+}
+
+.badge-primary-text {
+  font-size: 13.5px;
+  font-weight: 550;
+  color: var(--hero-text-primary);
+  line-height: 1;
+}
+
+.badge-dot-separator {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.40);
+  flex-shrink: 0;
+}
+
+.badge-secondary-chip {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #FFC48A;
+  font-family: inherit;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+/* 3. Main Headline */
+.hero-headline-title {
+  font-family: var(--font-display, 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--hero-text-primary);
+  text-align: center;
+  max-width: 900px;
+  text-wrap: balance;
+  margin: 0 auto 24px auto;
+  text-shadow: var(--hero-shadow-headline);
+}
+
+.headline-accent-word {
+  color: var(--hero-color-accent);
+  background: linear-gradient(135deg, #FFD3A1 0%, #FF8A3D 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  font-weight: 800;
+  text-shadow: none; /* No blur, no outer glow */
+}
+
+/* 4. Body Paragraph */
+.hero-body-text {
+  font-size: clamp(17.5px, 1.8vw, 20px);
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--hero-text-body);
+  text-align: center;
+  max-width: 62ch;
+  text-wrap: pretty;
+  margin: 0 auto 36px auto;
+  text-shadow: var(--hero-shadow-body);
+}
+
+.hero-brand-highlight {
+  font-weight: 600;
+  color: var(--hero-color-accent-subtle);
+  border-bottom: 2px solid var(--hero-color-accent-border);
+  padding-bottom: 1px;
+}
+
+.hero-brand-highlight.nowrap {
+  white-space: nowrap;
+}
+
+/* 5. Balanced Button Group (48px height) */
+.hero-actions-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 64px;
+  flex-wrap: wrap;
+}
+
+/* Primary Button */
+.hero-btn-primary {
+  height: var(--hero-btn-height);
+  padding: 0 24px;
+  border-radius: var(--hero-btn-radius);
+  background: var(--hero-color-orange);
+  color: var(--hero-text-dark); /* 7.8:1 contrast on #F26A0F */
+  font-size: 15.5px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  white-space: nowrap;
+  box-shadow: var(--hero-shadow-btn);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  text-decoration: none;
+}
+
+.hero-btn-primary:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: var(--hero-shadow-btn-hover);
+}
+
+.hero-btn-primary:active {
+  transform: translateY(0);
+  filter: brightness(0.96);
+}
+
+.hero-btn-primary:focus-visible {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 2px;
+}
+
+/* Secondary Ghost Button */
+.hero-btn-secondary {
+  height: var(--hero-btn-height);
+  padding: 0 24px;
+  border-radius: var(--hero-btn-radius);
+  background: var(--hero-ghost-bg);
+  border: 1.5px solid var(--hero-ghost-border);
+  color: var(--hero-text-primary);
+  font-size: 15.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  text-decoration: none;
+}
+
+.hero-btn-secondary:hover {
+  background: var(--hero-ghost-hover-bg);
+  border-color: var(--hero-ghost-hover-border);
+  transform: translateY(-1px);
+}
+
+.hero-btn-secondary:active {
+  transform: translateY(0);
+}
+
+.hero-btn-secondary:focus-visible {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 2px;
+}
+
+/* 6. Uniform Feature / Pillar Cards Grid */
+.hero-pillar-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  align-items: stretch;
+  width: 100%;
+}
+
+.hero-feature-card {
+  background: var(--hero-card-bg);
+  border: 1px solid var(--hero-card-border);
+  border-radius: var(--hero-card-radius);
+  padding: 24px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--hero-shadow-card);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hero-feature-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--hero-card-hover-border);
+  box-shadow: var(--hero-shadow-card-hover);
+}
+
+.card-icon-container {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(242, 106, 15, 0.18);
+  border: 1px solid rgba(242, 106, 15, 0.30);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--hero-color-accent);
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.card-heading {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--hero-text-primary);
+  line-height: 1.3;
+  margin: 0 0 8px 0;
+}
+
+.card-description {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--hero-text-muted);
+  margin: 0;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (360px - 1920px)
+   ========================================================================== */
+
+/* Tablet (Below 1024px) */
+@media (max-width: 1023px) {
+  .inkloom-hero-section {
+    padding: 48px 20px 60px 20px;
+  }
+  .hero-pillar-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+/* Mobile (Below 640px) */
+@media (max-width: 639px) {
+  .inkloom-hero-section {
+    padding: 36px 16px 48px 16px;
+  }
+  .hero-top-badge {
+    padding: 6px 12px;
+    gap: 8px;
+    font-size: 12px;
+    white-space: normal;
+    text-align: center;
+  }
+  .badge-primary-text,
+  .badge-secondary-chip {
+    font-size: 12px;
+  }
+  .hero-headline-title {
+    font-size: 2.2rem;
+  }
+  .hero-body-text {
+    font-size: 16px;
+    margin-bottom: 28px;
+  }
+  .hero-actions-cluster {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+  .hero-btn-primary,
+  .hero-btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+  .hero-pillar-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .hero-feature-card {
+    padding: 20px;
+  }
+}
+
+/* Accessibility: Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .hero-btn-primary,
+  .hero-btn-secondary,
+  .hero-feature-card {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+

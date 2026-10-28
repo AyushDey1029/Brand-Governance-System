@@ -743,19 +743,24 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  background: rgba(18, 15, 23, 0.72);
-  border-bottom: 1px solid rgba(254, 215, 170, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(18, 14, 24, 0.90);
+  border-bottom: 1px solid rgba(254, 215, 170, 0.12);
+  height: 64px;
+  display: flex;
+  align-items: center;
 }
 
 .landing-nav-inner {
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
-  padding: 14px 24px;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 100%;
 }
 
 .landing-brand-logo {
@@ -767,104 +772,145 @@ body {
 }
 
 .landing-logo-icon {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%);
+  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 16px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.4);
 }
 
-.landing-logo-text .brand-name {
+.brand-name {
   font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
   color: #FFFFFF;
-  display: block;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
-.landing-logo-text .brand-tagline {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  color: #818CF8;
-  display: block;
+.brand-tagline {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #FED7AA;
   text-transform: uppercase;
 }
 
 .landing-nav-links {
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 28px;
 }
 
 .landing-nav-links a {
-  color: #94A3B8;
+  color: #E2E8F0;
   text-decoration: none;
   font-size: 13.5px;
-  font-weight: 500;
-  transition: color 0.15s ease;
+  font-weight: 550;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  user-select: none;
 }
 
 .landing-nav-links a:hover {
-  color: #FFFFFF;
+  color: #FED7AA;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .landing-nav-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
+/* Emerald Live Telemetry Pill */
 .landing-telemetry-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
+  height: 38px;
+  padding: 0 14px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 12px;
-  color: #94A3B8;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.32);
+  color: #34D399;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.12);
+  user-select: none;
+  white-space: nowrap;
 }
 
 .telemetry-dot {
-  width: 7px;
-  height: 7px;
+  width: 7.5px;
+  height: 7.5px;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .telemetry-dot.online {
   background: #10B981;
-  box-shadow: 0 0 8px #10B981;
+  box-shadow: 0 0 10px #10B981;
 }
 
 .telemetry-dot.offline {
   background: #EF4444;
+  box-shadow: 0 0 8px #EF4444;
 }
 
+/* Single Sign In Button */
+.landing-signin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(254, 215, 170, 0.25);
+  color: #FFFFFF;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.landing-signin-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(254, 215, 170, 0.5);
+  color: #FED7AA;
+  transform: translateY(-1px);
+}
+
+/* Explore Demo / Open Workspace Action Button */
 .landing-enter-demo-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 18px;
+  height: 38px;
+  padding: 0 20px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+  background: linear-gradient(135deg, #EA580C 0%, #F97316 100%);
+  border: 1px solid rgba(254, 215, 170, 0.35);
   color: #FFFFFF;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
-  border: none;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.4);
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.38);
   transition: all 0.2s ease;
+  user-select: none;
+  white-space: nowrap;
 }
 
 .landing-enter-demo-btn:hover {
+  background: linear-gradient(135deg, #F97316 0%, #FB923C 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 22px rgba(249, 115, 22, 0.6);
+  box-shadow: 0 6px 22px rgba(249, 115, 22, 0.5);
 }
 
 /* 2. Hero Section */
@@ -890,25 +936,28 @@ body {
 .hero-tech-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 18px;
+  gap: 10px;
+  padding: 8px 22px;
   border-radius: 999px;
-  background: rgba(249, 115, 22, 0.08);
-  border: 1px solid rgba(249, 115, 22, 0.28);
-  font-size: 12.5px;
-  color: #FED7AA;
+  background: rgba(18, 14, 24, 0.94) !important;
+  border: 1px solid rgba(249, 115, 22, 0.45) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 15px rgba(249, 115, 22, 0.2);
+  font-size: 13px;
+  font-weight: 600;
+  color: #FFFFFF !important;
   margin-bottom: 28px;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(14px);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
 }
 
 .badge-divider {
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(254, 215, 170, 0.45);
 }
 
 .tech-chip {
-  color: #F97316;
-  font-weight: 600;
-  font-family: monospace;
+  color: #FED7AA !important;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
 
 .hero-headline {
@@ -917,8 +966,9 @@ body {
   font-weight: 800;
   line-height: 1.12;
   letter-spacing: -0.025em;
-  color: #F8FAFC;
+  color: #FFFFFF !important;
   margin-bottom: 22px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
 }
 
 .hero-gradient-text {
@@ -929,16 +979,19 @@ body {
 }
 
 .hero-subheadline {
-  max-width: 740px;
+  max-width: 760px;
   margin: 0 auto 36px auto;
-  font-size: 16px;
-  line-height: 1.65;
-  color: #D1C5D8;
+  font-size: 17.5px;
+  line-height: 1.7;
+  color: #FFFFFF !important;
+  font-weight: 450;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
 .hero-subheadline strong {
-  color: #FFFFFF;
-  font-weight: 600;
+  color: #FED7AA !important;
+  font-weight: 700;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
 }
 
 .hero-cta-group {
@@ -1034,9 +1087,10 @@ body {
 }
 
 .pillar-card p {
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: #94A3B8;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #F8FAFC !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
 /* 3. Section Common Styles */
@@ -1091,11 +1145,13 @@ body {
 }
 
 .section-desc {
-  font-size: 15px;
-  color: #94A3B8;
-  max-width: 640px;
+  font-size: 15.5px;
+  color: #FFFFFF !important;
+  max-width: 660px;
   margin: 0 auto;
-  line-height: 1.6;
+  line-height: 1.65;
+  font-weight: 450;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
 }
 
 /* 4. Live Inspection Showcase Card */
@@ -1452,7 +1508,8 @@ body {
 .arch-step-card p {
   font-size: 13.5px;
   line-height: 1.6;
-  color: #94A3B8;
+  color: #F1F5F9 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
 /* 6. Role-Aware Workflows */
@@ -1508,7 +1565,8 @@ body {
 
 .role-subtitle {
   font-size: 13px;
-  color: #94A3B8;
+  color: #FED7AA !important;
+  font-weight: 500;
 }
 
 .role-checklist {
@@ -1524,7 +1582,8 @@ body {
   gap: 12px;
   font-size: 13.5px;
   line-height: 1.5;
-  color: #CBD5E1;
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
 .check-icon-circle {
@@ -1659,44 +1718,83 @@ body {
   color: #FFFFFF;
 }
 
-.landing-user-badge {
+.landing-creator-login-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 12px;
+  height: 38px;
+  padding: 0 18px;
   border-radius: 999px;
-  background: rgba(28, 22, 34, 0.7);
-  border: 1px solid rgba(254, 215, 170, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(254, 215, 170, 0.25);
+  color: #FFFFFF;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.landing-creator-login-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(254, 215, 170, 0.5);
+  color: #FED7AA;
+  transform: translateY(-1px);
+}
+
+.landing-user-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 38px;
+  padding: 0 14px 0 6px;
+  border-radius: 999px;
+  background: rgba(26, 20, 32, 0.92);
+  border: 1px solid rgba(254, 215, 170, 0.25);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  user-select: none;
+  white-space: nowrap;
 }
 
 .landing-user-avatar {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+  background: linear-gradient(135deg, #F97316 0%, #C2410C 100%);
   color: #FFFFFF;
   font-size: 11px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+.landing-user-avatar.admin {
+  background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%);
 }
 
 .landing-user-name {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
-  color: #F8FAFC;
+  color: #FFFFFF;
 }
 
 .landing-user-role {
-  padding: 2px 7px;
-  border-radius: 4px;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  color: #34D399;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(249, 115, 22, 0.16);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  color: #FED7AA;
   font-size: 10.5px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.landing-user-role.admin {
+  background: rgba(234, 179, 8, 0.16);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  color: #FDE047;
 }
 
 /* 2. Top Header User Profile & Dropdown */

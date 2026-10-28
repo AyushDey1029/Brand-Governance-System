@@ -62,7 +62,7 @@ export default function AuthModal({ onEnterWorkspace }) {
 
       setTimeout(() => {
         closeAuthModal();
-        if (onEnterWorkspace) onEnterWorkspace();
+        if (onEnterWorkspace) onEnterWorkspace(authPortal);
       }, 700);
     } catch (err) {
       console.error('[Auth Error]', err);
@@ -74,7 +74,7 @@ export default function AuthModal({ onEnterWorkspace }) {
 
   const handleDemoBypass = () => {
     loginAsDemo(authPortal);
-    if (onEnterWorkspace) onEnterWorkspace();
+    if (onEnterWorkspace) onEnterWorkspace(authPortal);
   };
 
   return (

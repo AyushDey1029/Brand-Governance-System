@@ -34,11 +34,11 @@ function MainApp() {
         setActiveTab('overview');
       }
     } else {
-      if (activeTab === 'overview') {
+      if (activeTab === 'overview' || activeTab === 'policies' || activeTab === 'assets' || activeTab === 'sandbox') {
         setActiveTab('creator_studio');
       }
     }
-  }, [isAdmin]);
+  }, [isAdmin, user]);
 
   // Knowledge Base State
   const [facts, setFacts] = useState([
@@ -196,10 +196,11 @@ function MainApp() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const enterDemo = () => {
+  const enterDemo = (requestedRole) => {
     setViewMode('dashboard');
     window.location.hash = 'dashboard';
-    setActiveTab(isAdmin ? 'overview' : 'creator_studio');
+    const targetIsAdmin = requestedRole ? requestedRole === 'admin' : (user?.role === 'admin' || user?.role === 'reviewer');
+    setActiveTab(targetIsAdmin ? 'overview' : 'creator_studio');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -250,7 +251,7 @@ function MainApp() {
         {viewMode === 'landing' ? (
           <LandingPage 
             onEnterDemo={enterDemo} 
-            apiStatus={apiStatus} 
+             
           />
         ) : (
           <div className="app-layout">
@@ -272,7 +273,7 @@ function MainApp() {
             <div className="main-content">
               <Header 
                 currentTitle={getTabTitle()}
-                apiStatus={apiStatus}
+                
                 onRefreshStatus={checkHealth}
                 checking={checkingApi}
                 onGoHome={goHome}
