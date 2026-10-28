@@ -49,3 +49,6 @@ htmlcov/
 node_modules/
 .eslintcache
 
+
+# Scratch & Temporary
+scratch/

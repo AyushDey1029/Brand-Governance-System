@@ -1,0 +1,434 @@
+/* ==========================================================================
+   INKLOOM AI — TOP NAVBAR COMPONENT STYLES
+   Design Tokens: Obsidian Dark Theme & Sunset Ember Accent (#F26A0F)
+   Spacing: 4px / 8px / 12px / 16px / 20px / 24px / 32px scale
+   ========================================================================== */
+
+:root {
+  /* Colors */
+  --ink-nav-bg: rgba(18, 14, 24, 0.90);
+  --ink-nav-border: rgba(255, 255, 255, 0.08);
+  --ink-nav-blur: 16px;
+
+  --ink-orange: #F26A0F;
+  --ink-orange-hover: #FF7A1A;
+  --ink-orange-active: #D95405;
+  --ink-orange-glow: rgba(242, 106, 15, 0.35);
+
+  --ink-text-primary: #FFFFFF;
+  --ink-text-nav: rgba(255, 255, 255, 0.80);
+  --ink-text-nav-hover: #FFFFFF;
+  --ink-text-muted: rgba(254, 215, 170, 0.70);
+
+  --ink-chip-bg: rgba(28, 22, 34, 0.85);
+  --ink-chip-border: rgba(255, 255, 255, 0.12);
+
+  /* Dimensions & Spacing */
+  --ink-nav-height: 72px;
+  --ink-btn-height: 40px;
+  --ink-max-width: 1280px;
+
+  --ink-radius-sm: 6px;
+  --ink-radius-md: 8px;
+  --ink-radius-lg: 12px;
+  --ink-radius-full: 9999px;
+}
+
+/* 1. Header Container */
+.inkloom-top-navbar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: var(--ink-nav-height);
+  background: var(--ink-nav-bg);
+  backdrop-filter: blur(var(--ink-nav-blur));
+  -webkit-backdrop-filter: blur(var(--ink-nav-blur));
+  border-bottom: 1px solid var(--ink-nav-border);
+  width: 100%;
+}
+
+.inkloom-navbar-container {
+  max-width: var(--ink-max-width);
+  margin: 0 auto;
+  height: 100%;
+  padding: 0 clamp(24px, 3.5vw, 32px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* 2. Group 1: Brand Block */
+.navbar-brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--ink-radius-md);
+  padding: 4px;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+.navbar-brand-link:hover {
+  opacity: 0.95;
+}
+
+.navbar-brand-link:focus-visible {
+  outline: 2px solid var(--ink-orange);
+  outline-offset: 2px;
+}
+
+.brand-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #F26A0F 0%, #D9480F 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(242, 106, 15, 0.4);
+}
+
+.brand-shield-icon {
+  width: 20px;
+  height: 20px;
+  color: #FFFFFF;
+}
+
+.brand-text-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.brand-name-title {
+  font-family: var(--font-display, 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--ink-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.brand-tagline-sub {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-text-muted);
+  opacity: 0.75;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* 3. Group 2: Centered Nav Links (Desktop) */
+.navbar-center-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.nav-anchor-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--ink-text-nav);
+  text-decoration: none;
+  padding: 10px 16px;
+  min-height: 44px; /* 44px WCAG minimum touch target */
+  border-radius: var(--ink-radius-md);
+  position: relative;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.nav-anchor-link:hover {
+  color: var(--ink-text-nav-hover);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nav-anchor-link:focus-visible {
+  outline: 2px solid var(--ink-orange);
+  outline-offset: 2px;
+  color: #FFFFFF;
+}
+
+/* 2px orange underline for active link state */
+.nav-anchor-link.active {
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.nav-anchor-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: var(--ink-orange);
+  border-radius: 2px;
+  box-shadow: 0 0 8px var(--ink-orange-glow);
+}
+
+/* 4. Group 3: Right Actions (User Chip + CTA Button) */
+.navbar-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+/* User Chip */
+.navbar-user-chip {
+  height: var(--ink-btn-height); /* exactly 40px */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 0 6px;
+  border-radius: var(--ink-radius-full);
+  background: var(--ink-chip-bg);
+  border: 1px solid var(--ink-chip-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  user-select: none;
+  white-space: nowrap;
+  transition: border-color 0.15s ease;
+}
+
+.navbar-user-chip:focus-visible {
+  outline: 2px solid var(--ink-orange);
+  outline-offset: 2px;
+}
+
+.navbar-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F26A0F 0%, #C2410C 100%);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.navbar-user-avatar.admin {
+  background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%);
+}
+
+.navbar-user-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #FFFFFF;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navbar-user-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: var(--ink-radius-sm);
+  background: rgba(242, 106, 15, 0.16);
+  border: 1px solid rgba(242, 106, 15, 0.35);
+  color: #FED7AA;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.navbar-user-badge.admin {
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #FDE047;
+}
+
+/* Secondary Sign-In Button */
+.navbar-signin-button {
+  height: var(--ink-btn-height); /* 40px */
+  padding: 0 18px;
+  border-radius: var(--ink-radius-md);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--ink-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.navbar-signin-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(254, 215, 170, 0.4);
+  color: #FED7AA;
+  transform: translateY(-1px);
+}
+
+.navbar-signin-button:focus-visible {
+  outline: 2px solid var(--ink-orange);
+  outline-offset: 2px;
+}
+
+/* Primary CTA Button "Open Workspace →" */
+.navbar-cta-button {
+  height: var(--ink-btn-height); /* 40px */
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--ink-radius-md); /* 8px radius */
+  background: var(--ink-orange);
+  color: #FFFFFF;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px var(--ink-orange-glow);
+  transition: all 0.18s ease;
+  user-select: none;
+}
+
+.navbar-cta-button:hover {
+  background: var(--ink-orange-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(242, 106, 15, 0.5);
+}
+
+.navbar-cta-button:focus-visible {
+  outline: 2px solid #FED7AA;
+  outline-offset: 2px;
+}
+
+.navbar-cta-button:active {
+  background: var(--ink-orange-active);
+  transform: translateY(0);
+  box-shadow: 0 2px 8px var(--ink-orange-glow);
+  filter: brightness(0.95);
+}
+
+/* 5. Mobile Controls & Drawer */
+.navbar-mobile-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ink-radius-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+
+.navbar-mobile-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-mobile-toggle:focus-visible {
+  outline: 2px solid var(--ink-orange);
+  outline-offset: 2px;
+}
+
+.navbar-mobile-drawer {
+  display: none;
+  background: rgba(22, 17, 28, 0.98);
+  border-bottom: 1px solid var(--ink-nav-border);
+  padding: 16px 24px 20px 24px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.navbar-mobile-drawer nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.navbar-mobile-drawer .mobile-nav-link {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 550;
+  color: var(--ink-text-nav);
+  text-decoration: none;
+  border-radius: var(--ink-radius-md);
+  transition: all 0.15s ease;
+}
+
+.navbar-mobile-drawer .mobile-nav-link:hover,
+.navbar-mobile-drawer .mobile-nav-link.active {
+  color: #FFFFFF;
+  background: rgba(242, 106, 15, 0.15);
+  border-left: 3px solid var(--ink-orange);
+}
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS
+   ========================================================================== */
+
+/* Below 1024px: Collapse nav links into hamburger menu */
+@media (max-width: 1023px) {
+  .navbar-center-nav {
+    display: none;
+  }
+  .navbar-mobile-toggle {
+    display: flex;
+  }
+  .navbar-mobile-drawer {
+    display: block;
+  }
+}
+
+/* Below 640px: Compact user chip (avatar only) and compact CTA */
+@media (max-width: 639px) {
+  .inkloom-navbar-container {
+    padding: 0 16px;
+    gap: 8px;
+  }
+  .navbar-actions-group {
+    gap: 8px;
+  }
+  .brand-tagline-sub {
+    display: none; /* Keep brand uncluttered on mobile */
+  }
+  .navbar-user-chip {
+    padding: 0 5px;
+    width: 40px;
+    justify-content: center;
+  }
+  .navbar-user-name,
+  .navbar-user-badge {
+    display: none;
+  }
+  .navbar-cta-button {
+    padding: 0 14px;
+    font-size: 13px;
+  }
+}
+

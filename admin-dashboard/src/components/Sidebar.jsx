@@ -6,14 +6,16 @@ import {
   Palette, 
   FlaskConical, 
   CheckSquare,
-  LogOut
+  LogOut,
+  Sparkles,
+  ArrowLeftRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar({ activeTab, setActiveTab, counts = {}, onGoHome, onNotify }) {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, switchRole, logout } = useAuth();
 
-  const navItems = [
+  const adminNavItems = [
     { id: 'overview', label: 'Executive Overview', icon: BarChart3 },
     { id: 'facts', label: 'Golden Facts KB', icon: Database, badge: counts.facts || 4 },
     { id: 'policies', label: 'Tone & Policy Rules', icon: ShieldAlert, badge: counts.policies || 4 },
@@ -21,6 +23,14 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {}, onGoHome
     { id: 'sandbox', label: 'Live Audit Sandbox', icon: FlaskConical },
     { id: 'reviews', label: 'Review Queue', icon: CheckSquare, badge: counts.reviews || 2 }
   ];
+
+  const creatorNavItems = [
+    { id: 'creator_studio', label: 'Creator Studio', icon: Sparkles, badge: 'AI Live' },
+    { id: 'facts', label: 'Golden Facts Reference', icon: Database, badge: counts.facts || 4 },
+    { id: 'reviews', label: 'My Submissions', icon: CheckSquare, badge: counts.reviews || 2 }
+  ];
+
+  const navItems = isAdmin ? adminNavItems : creatorNavItems;
 
   const handleLogout = async () => {
     await logout();
@@ -43,7 +53,7 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {}, onGoHome
         </div>
         <div className="logo-text">
           <h1>Inkloom <span className="gradient">AI</span></h1>
-          <p>Governance Hub</p>
+          <p>{isAdmin ? 'Governance Hub' : 'Creator Portal'}</p>
         </div>
       </div>
 
@@ -68,6 +78,33 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {}, onGoHome
       </nav>
 
       <div className="sidebar-footer">
+        {/* Fast Role Switcher */}
+        <button 
+          onClick={() => {
+            const nextRole = isAdmin ? 'creator' : 'admin';
+            switchRole(nextRole);
+            setActiveTab(nextRole === 'admin' ? 'overview' : 'creator_studio');
+            if (onNotify) onNotify(`Switched to ${nextRole === 'admin' ? 'Brand Admin' : 'Creator'} workspace`);
+          }}
+          className="btn-secondary"
+          style={{ 
+            width: '100%', 
+            marginBottom: '10px', 
+            fontSize: '11px', 
+            padding: '7px 10px', 
+            borderRadius: '8px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: '6px',
+            border: '1px solid rgba(254, 215, 170, 0.16)'
+          }}
+          title="Switch perspective between Content Creator and Brand Administrator"
+        >
+          <ArrowLeftRight size={12} color="#F97316" />
+          <span>Switch to {isAdmin ? 'Creator View' : 'Admin View'}</span>
+        </button>
+
         {user && (
           <div className="sidebar-user-card">
             <div className={`sidebar-user-avatar ${isAdmin ? 'admin' : ''}`}>
@@ -76,7 +113,7 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {}, onGoHome
             <div className="sidebar-user-info">
               <span className="sidebar-user-name">{user.fullName || user.email}</span>
               <span className={`sidebar-user-role ${isAdmin ? 'admin' : ''}`}>
-                {isAdmin ? '👑 Brand Admin' : 'Creator'}
+                {isAdmin ? '👑 Brand Admin' : '✨ Creator'}
               </span>
             </div>
             <button 
@@ -90,7 +127,7 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {}, onGoHome
           </div>
         )}
 
-        <div style={{ fontSize: '11px', color: 'var(--text-dim)', textAlign: 'center' }}>
+        <div style={{ fontSize: '11px', color: 'var(--text-dim)', textAlign: 'center', marginTop: '6px' }}>
           Split Vision: OpenCV + Gemini RAG<br />
           <strong>Phase 1.5 Integrated</strong>
         </div>
