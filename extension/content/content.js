@@ -7,9 +7,10 @@
  * - CMS & Web: WordPress (Gutenberg), Webflow, standard contenteditable & textareas
  * 
  * Highlighting Engine:
- * Uses a zero-DOM-mutation Transparent Overlay Layer. It measures exact text bounding
- * boxes via Range.getClientRects() to render wavy underlines without modifying the editor's
- * DOM nodes. This prevents ProseMirror / Draft.js / React reconciliation from stripping marks.
+ * Uses a Fixed Viewport Overlay (`#inkloom-highlights-overlay`) measuring exact sub-pixel
+ * text coordinates via Range.getClientRects(). It places wavy underline markers on top of
+ * the text without altering the editor's DOM nodes, making it 100% immune to ProseMirror,
+ * Draft.js, or React reconciliation resets.
  */
 
 (function () {
@@ -20,13 +21,12 @@
   let currentAuditData = null;
   let activeIssues = [];
   let isAuditing = false;
-  let currentTargetEditor = null;
   let realtimeDebounceTimer = null;
   let overlayContainer = null;
   let trackedTextRanges = [];
 
   // =========================================================================
-  // 1. PLATFORM DETECTION & DRAFT EDITOR TARGETING
+  // 1. PLATFORM DETECTION & UNIVERSAL MULTI-FIELD CONTENT EXTRACTION
   // =========================================================================
 
   function detectPlatform() {
@@ -43,136 +43,82 @@
     return "Web CMS";
   }
 
-  // Track the active editor element when the user clicks or types
-  function trackEditor(el) {
-    if (!el || !(el instanceof Element)) return;
-    if (
-      el.closest("#inkloom-inpage-popup") ||
-      el.closest("#inkloom-floating-pill") ||
-      el.closest("#inkloom-tooltip-portal") ||
-      el.closest("#inkloom-highlights-overlay")
-    ) {
-      return;
-    }
-
-    if (
-      el.isContentEditable ||
-      el.getAttribute("contenteditable") === "true" ||
-      el.classList.contains("ProseMirror") ||
-      el.classList.contains("ql-editor") ||
-      el.getAttribute("role") === "textbox" ||
-      el.tagName === "TEXTAREA" ||
-      (el.tagName === "INPUT" && el.type === "text")
-    ) {
-      currentTargetEditor = el;
-    } else {
-      const parentEditable = el.closest(
-        '[contenteditable="true"], .ProseMirror, .ql-editor, [role="textbox"], textarea, [data-slate-editor="true"], .editor-content'
-      );
-      if (parentEditable) {
-        currentTargetEditor = parentEditable;
-      }
-    }
-  }
-
-  // Find the true content editor on the page (avoiding site headers, navigation, footers)
-  function findActiveEditor() {
-    // 1. Cached editor from recent user interaction
-    if (currentTargetEditor && document.body.contains(currentTargetEditor)) {
-      const text = (currentTargetEditor.innerText || currentTargetEditor.value || "").trim();
-      if (text.length > 0) return currentTargetEditor;
-    }
-
-    // 2. Currently focused element
-    const active = document.activeElement;
-    if (
-      active &&
-      active !== document.body &&
-      !active.closest("#inkloom-floating-pill") &&
-      !active.closest("#inkloom-inpage-popup")
-    ) {
-      if (
-        active.isContentEditable ||
-        active.getAttribute("contenteditable") === "true" ||
-        active.classList.contains("ProseMirror") ||
-        active.tagName === "TEXTAREA" ||
-        active.getAttribute("role") === "textbox"
-      ) {
-        currentTargetEditor = active;
-        return active;
-      }
-    }
-
-    // 3. Platform-specific and universal rich-text editor selectors
-    const editorSelectors = [
-      // LinkedIn Article Creator & Post Editor
+  // Find all editable fields (Title, Body, inputs) on the page
+  function getAllDraftEditables() {
+    const selectors = [
+      '[role="textbox"][contenteditable="true"]',
       'div.ProseMirror[contenteditable="true"]',
+      'div.ProseMirror',
       'div[data-placeholder="Write here…"]',
+      'div[data-placeholder="Title"]',
       'div.editor-content [contenteditable="true"]',
       'div.editor-content',
       '.share-creation-state__text-editor [contenteditable="true"]',
       'div.ql-editor[contenteditable="true"]',
       'div.msg-form__contenteditable[contenteditable="true"]',
-      // Canva & Design tools
-      'div.ProseMirror',
       'div[data-slate-editor="true"]',
       'textarea[data-testid]',
-      // Twitter / X
       'div[data-testid="tweetTextarea_0"]',
-      'div[role="textbox"][contenteditable="true"]',
-      // WordPress / CMS / Webflow
       '#liveEditor',
       '.editor-box',
       '.wp-block-post-content [contenteditable="true"]',
       '.wp-block-post-content',
-      '.block-editor-writing-flow',
       '.w-richtext [contenteditable="true"]',
       '.w-richtext',
-      // General rich text editors
-      'div[contenteditable="true"][role="textbox"]',
       'div[contenteditable="true"]',
       '[contenteditable="true"]',
       'textarea'
     ];
 
-    for (const sel of editorSelectors) {
-      const candidates = Array.from(document.querySelectorAll(sel)).filter(
-        (el) =>
-          !el.closest("#inkloom-inpage-popup") &&
-          !el.closest("#inkloom-floating-pill") &&
-          !el.closest("#inkloom-tooltip-portal") &&
-          !el.closest("#inkloom-highlights-overlay")
-      );
+    const matched = [];
+    const seen = new Set();
 
-      for (const node of candidates) {
-        // Exclude site navigation, global search, header, footer elements
-        if (node.closest("nav, header, footer, .global-nav, .nav__container, #global-nav, aside")) continue;
-        const text = (node.innerText || node.value || "").trim();
-        if (text.length > 5) {
-          currentTargetEditor = node;
-          return node;
+    for (const sel of selectors) {
+      const elements = Array.from(document.querySelectorAll(sel));
+      for (const el of elements) {
+        if (
+          seen.has(el) ||
+          el.closest("#inkloom-inpage-popup") ||
+          el.closest("#inkloom-floating-pill") ||
+          el.closest("#inkloom-tooltip-portal") ||
+          el.closest("#inkloom-highlights-overlay") ||
+          el.closest("nav, header, footer, .global-nav, .nav__container, #global-nav, aside")
+        ) {
+          continue;
+        }
+
+        const text = (el.innerText || el.value || "").trim();
+        if (text.length > 0) {
+          seen.add(el);
+          matched.push(el);
         }
       }
     }
 
-    return null;
+    return matched;
   }
 
-  // Extract ONLY draft text and draft images
+  // Extract draft text across Title, Body, and paragraphs
   function extractContent() {
-    let extractedText = "";
-    const editor = findActiveEditor();
+    const editables = getAllDraftEditables();
+    const collectedTexts = [];
 
-    // 1. Check user text selection first
+    // 1. Text from user selection if available
     const selection = window.getSelection() ? window.getSelection().toString().trim() : "";
     if (selection && selection.length > 10) {
-      extractedText = selection;
-    } else if (editor) {
-      extractedText = (editor.innerText || editor.value || "").trim();
+      collectedTexts.push(selection);
     }
 
-    // 2. Fallback to visible draft paragraphs if no single editor was matched
-    if (!extractedText) {
+    // 2. Text from all matched editable draft containers
+    for (const ed of editables) {
+      const text = (ed.innerText || ed.value || "").trim();
+      if (text.length > 0 && !collectedTexts.includes(text)) {
+        collectedTexts.push(text);
+      }
+    }
+
+    // 3. Fallback to article / main visible paragraphs
+    if (collectedTexts.length === 0) {
       const mainContainer = document.querySelector(".cms-container, article, main, [role='main']");
       if (mainContainer) {
         const paragraphs = Array.from(mainContainer.querySelectorAll("p, h1, h2, h3, blockquote"))
@@ -183,20 +129,25 @@
               !p.closest("nav, header, footer, aside")
           )
           .map((p) => p.innerText.trim())
-          .filter((t) => t.length > 10);
+          .filter((t) => t.length > 5);
         if (paragraphs.length > 0) {
-          extractedText = paragraphs.slice(0, 10).join("\n\n");
+          collectedTexts.push(paragraphs.slice(0, 10).join("\n\n"));
         }
       }
     }
 
-    // 3. Draft Image extraction: ONLY check images inside the editor or article preview
+    const fullDraftText = collectedTexts.join("\n\n").trim();
+
+    // 4. Draft Image extraction: ONLY check images inside draft containers
     let imageUrls = [];
-    if (editor) {
-      const editorImgs = Array.from(editor.querySelectorAll("img[src]"));
-      imageUrls = editorImgs
-        .map((img) => img.currentSrc || img.src)
-        .filter((src) => src && (src.startsWith("http") || src.startsWith("data:image")));
+    for (const ed of editables) {
+      const imgs = Array.from(ed.querySelectorAll("img[src]"));
+      for (const img of imgs) {
+        const src = img.currentSrc || img.src;
+        if (src && (src.startsWith("http") || src.startsWith("data:image"))) {
+          imageUrls.push(src);
+        }
+      }
     }
 
     if (imageUrls.length === 0) {
@@ -207,12 +158,12 @@
     }
 
     return {
-      text: extractedText,
+      text: fullDraftText,
       image_urls: imageUrls,
       page_url: window.location.href,
       page_title: document.title,
       platform: detectPlatform(),
-      editorElement: editor
+      editables: editables
     };
   }
 
@@ -301,7 +252,7 @@
 
     document.body.appendChild(popup);
 
-    // ALWAYS run a fresh audit when popup opens
+    // ALWAYS run a fresh evaluation on popup open
     runAudit(false);
   }
 
@@ -313,7 +264,9 @@
     const issues = data.text_evaluations || [];
     const statusClass = score >= 90 && issues.length === 0 ? "compliant" : score >= 70 ? "warning" : "flagged";
     const statusLabel =
-      score >= 90 && issues.length === 0 ? "100% On-Brand" : `${issues.length} Deviation${issues.length > 1 ? 's' : ''} Require Resolution`;
+      score >= 90 && issues.length === 0
+        ? "100% On-Brand"
+        : `${issues.length} Deviation${issues.length > 1 ? 's' : ''} Require Resolution`;
     const wordCount = (data.extracted_text || "").split(/\s+/).filter(Boolean).length;
 
     activePopup.innerHTML = `
@@ -499,8 +452,8 @@
       return;
     }
 
-    // STEP 1: INSTANT LOCAL DETERMINISTIC EVALUATION (0ms Latency!)
-    // Ensures real-time underlines immediately appear without waiting for backend
+    // STEP 1: INSTANT LOCAL DETERMINISTIC AUDIT (0ms Latency!)
+    // Evaluates rules immediately on the full text
     const localResult = runLocalDeterministicAudit(pageData.text);
     handleAuditSuccess(localResult, pageData.text);
 
@@ -522,7 +475,6 @@
               return;
             }
             if (res && res.success && res.data && Array.isArray(res.data.text_evaluations)) {
-              // If backend found findings, use them; otherwise local findings stand
               if (res.data.text_evaluations.length > 0) {
                 handleAuditSuccess(res.data, pageData.text);
               }
@@ -540,12 +492,14 @@
     currentAuditData = auditData;
     activeIssues = auditData.text_evaluations || [];
 
-    // 1. Immediately highlight violations directly onto the text in the editor!
+    // 1. Immediately highlight violations directly onto the text via the overlay!
     highlightIssues(activeIssues);
 
     // 2. Update status pill
-    const score = typeof auditData.compliance_score === "number" ? auditData.compliance_score : calculateScore(activeIssues);
-    const badgeText = activeIssues.length > 0 ? `${activeIssues.length} Flag${activeIssues.length > 1 ? 's' : ''}` : "100%";
+    const score =
+      typeof auditData.compliance_score === "number" ? auditData.compliance_score : calculateScore(activeIssues);
+    const badgeText =
+      activeIssues.length > 0 ? `${activeIssues.length} Flag${activeIssues.length > 1 ? 's' : ''}` : "100%";
     const status = activeIssues.length > 0 ? (score < 70 ? "flagged" : "warning") : "compliant";
 
     updatePillStatus(status, badgeText);
@@ -683,7 +637,7 @@
   }
 
   // =========================================================================
-  // 5. HYBRID HIGH-ASSURANCE TEXT HIGHLIGHTING (Overlay + In-DOM)
+  // 5. FIXED VIEWPORT OVERLAY HIGHLIGHTING (Works on 100% of Websites)
   // =========================================================================
 
   function getOrCreateOverlay() {
@@ -725,10 +679,9 @@
     if (!evaluations || evaluations.length === 0) return;
 
     const overlay = getOrCreateOverlay();
-    const editor = findActiveEditor();
-    const searchRoot = editor || document.querySelector(
-      '.editor-content, .ProseMirror, .wp-block-post-content, .w-richtext, #liveEditor, .editor-box, article, main'
-    ) || document.body;
+
+    // Search across the main page body (skipping site navigation, headers, footers)
+    const searchRoot = document.querySelector('.cms-container, article, main, [role="main"]') || document.body;
 
     evaluations.forEach((issue) => {
       if (!issue.claim) return;
@@ -749,6 +702,7 @@
             node.parentElement.closest("#inkloom-inpage-popup") ||
             node.parentElement.closest("#inkloom-tooltip-portal") ||
             node.parentElement.closest("#inkloom-highlights-overlay") ||
+            node.parentElement.closest("nav, header, footer, .global-nav, #global-nav, aside") ||
             node.parentElement.tagName === "SCRIPT" ||
             node.parentElement.tagName === "STYLE")
         ) {
@@ -783,9 +737,10 @@
 
             const markPill = document.createElement("div");
             markPill.className = `inkloom-overlay-mark inkloom-${issue.severity || 'warning'}`;
-            markPill.style.position = "absolute";
-            markPill.style.top = `${rect.top + window.scrollY}px`;
-            markPill.style.left = `${rect.left + window.scrollX}px`;
+            // Use fixed coordinates directly from getClientRects()
+            markPill.style.position = "fixed";
+            markPill.style.top = `${rect.top}px`;
+            markPill.style.left = `${rect.left}px`;
             markPill.style.width = `${rect.width}px`;
             markPill.style.height = `${rect.height}px`;
             markPill.style.borderBottom = `2.5px wavy ${issue.severity === 'high' ? '#EF4444' : '#F59E0B'}`;
@@ -796,7 +751,7 @@
             markPill.style.zIndex = "2147483640";
             markPill.title = `Inkloom: ${issue.issue}`;
 
-            // Save for re-positioning on scroll
+            // Save for re-positioning on scroll / resize
             trackedTextRanges.push({ range, element: markPill, issue });
 
             // Hook hover tooltip
@@ -824,8 +779,8 @@
         const rects = item.range.getClientRects();
         if (rects.length > 0) {
           const r = rects[0];
-          item.element.style.top = `${r.top + window.scrollY}px`;
-          item.element.style.left = `${r.left + window.scrollX}px`;
+          item.element.style.top = `${r.top}px`;
+          item.element.style.left = `${r.left}px`;
           item.element.style.width = `${r.width}px`;
           item.element.style.height = `${r.height}px`;
         }
@@ -916,27 +871,13 @@
     if (realtimeDebounceTimer) clearTimeout(realtimeDebounceTimer);
     realtimeDebounceTimer = setTimeout(() => {
       runAudit(true);
-    }, 300); // 300ms responsive debounce
+    }, 250); // 250ms fast debounce
   }
 
-  document.addEventListener("focusin", (e) => {
-    trackEditor(e.target);
-    scheduleRealtimeAudit();
-  }, true);
-
-  document.addEventListener("click", (e) => {
-    trackEditor(e.target);
-  }, true);
-
-  document.addEventListener("input", (e) => {
-    trackEditor(e.target);
-    scheduleRealtimeAudit();
-  }, true);
-
-  document.addEventListener("keyup", (e) => {
-    trackEditor(e.target);
-    scheduleRealtimeAudit();
-  }, true);
+  document.addEventListener("input", scheduleRealtimeAudit, true);
+  document.addEventListener("keyup", scheduleRealtimeAudit, true);
+  document.addEventListener("focusin", scheduleRealtimeAudit, true);
+  document.addEventListener("click", scheduleRealtimeAudit, true);
 
   // =========================================================================
   // 7. UNIVERSAL 1-CLICK IN-PLACE REWRITE EXECUTION
@@ -944,18 +885,15 @@
 
   function executeRewrite(claim, rewrite) {
     let replaced = false;
-    const editor = findActiveEditor();
+    const editables = getAllDraftEditables();
 
-    // Strategy 1: Check active focused selection or range replacement
-    if (editor) {
-      editor.focus();
+    for (const ed of editables) {
       const regex = new RegExp(claim.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"), "i");
-      const currentText = editor.innerText || editor.value || "";
+      const currentText = ed.innerText || ed.value || "";
 
       if (regex.test(currentText)) {
-        if (editor.isContentEditable) {
-          // Select and replace via execCommand or innerHTML replacement
-          const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+        if (ed.isContentEditable) {
+          const walker = document.createTreeWalker(ed, NodeFilter.SHOW_TEXT);
           while (walker.nextNode()) {
             const node = walker.currentNode;
             if (node.textContent && regex.test(node.textContent)) {
@@ -966,56 +904,28 @@
           }
 
           if (!replaced) {
-            editor.innerHTML = editor.innerHTML.replace(regex, rewrite);
+            ed.innerHTML = ed.innerHTML.replace(regex, rewrite);
             replaced = true;
           }
 
-          editor.dispatchEvent(new Event("input", { bubbles: true }));
-          editor.dispatchEvent(new Event("change", { bubbles: true }));
-          editor.classList.add("inkloom-repaired-pulse");
-          setTimeout(() => editor.classList.remove("inkloom-repaired-pulse"), 1500);
-        } else if (editor.value) {
-          editor.value = editor.value.replace(regex, rewrite);
-          editor.dispatchEvent(new Event("input", { bubbles: true }));
-          editor.dispatchEvent(new Event("change", { bubbles: true }));
-          editor.classList.add("inkloom-repaired-pulse");
-          setTimeout(() => editor.classList.remove("inkloom-repaired-pulse"), 1500);
-          replaced = true;
-        }
-      }
-    }
-
-    // Strategy 2: Deep search across all page editables
-    if (!replaced) {
-      const editables = Array.from(
-        document.querySelectorAll(
-          '[contenteditable="true"], .ProseMirror, textarea, input, .editor-content, #liveEditor, .editor-box'
-        )
-      );
-
-      for (const ed of editables) {
-        const regex = new RegExp(claim.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"), "i");
-        if (ed.isContentEditable && regex.test(ed.innerText || ed.innerHTML)) {
-          ed.innerHTML = ed.innerHTML.replace(regex, rewrite);
           ed.dispatchEvent(new Event("input", { bubbles: true }));
           ed.dispatchEvent(new Event("change", { bubbles: true }));
           ed.classList.add("inkloom-repaired-pulse");
           setTimeout(() => ed.classList.remove("inkloom-repaired-pulse"), 1500);
-          replaced = true;
-          break;
-        } else if (ed.value && regex.test(ed.value)) {
+        } else if (ed.value) {
           ed.value = ed.value.replace(regex, rewrite);
           ed.dispatchEvent(new Event("input", { bubbles: true }));
           ed.dispatchEvent(new Event("change", { bubbles: true }));
           ed.classList.add("inkloom-repaired-pulse");
           setTimeout(() => ed.classList.remove("inkloom-repaired-pulse"), 1500);
           replaced = true;
-          break;
         }
+
+        if (replaced) break;
       }
     }
 
-    // Trigger immediate re-audit to clear highlights and update score
+    // Trigger immediate re-audit to refresh highlights and update score
     scheduleRealtimeAudit();
 
     return replaced;
