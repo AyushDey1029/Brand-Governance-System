@@ -4,6 +4,15 @@ from functools import lru_cache
 from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+try:
+    import certifi
+    if not os.environ.get("SSL_CERT_FILE"):
+        os.environ["SSL_CERT_FILE"] = certifi.where()
+    if not os.environ.get("REQUESTS_CA_BUNDLE"):
+        os.environ["REQUESTS_CA_BUNDLE"] = certifi.where()
+except ImportError:
+    pass
+
 
 class Settings(BaseSettings):
     app_name: str = "Inkloom AI - Brand Governance API"
@@ -17,8 +26,8 @@ class Settings(BaseSettings):
     
     # Gemini AI
     gemini_api_key: str = ""
-    gemini_model_text: str = "gemini-1.5-flash"
-    gemini_embedding_model: str = "text-embedding-004"
+    gemini_model_text: str = "gemini-2.5-flash"
+    gemini_embedding_model: str = "gemini-embedding-001"
     
     # Vector Database & RAG Configuration
     vector_db_provider: str = "in_memory"  # Options: "in_memory", "qdrant", "pinecone"

@@ -5,10 +5,14 @@ import {
   ShieldAlert, 
   Palette, 
   FlaskConical, 
-  CheckSquare 
+  CheckSquare,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-export default function Sidebar({ activeTab, setActiveTab, counts = {} }) {
+export default function Sidebar({ activeTab, setActiveTab, counts = {}, onGoHome, onNotify }) {
+  const { user, isAdmin, logout } = useAuth();
+
   const navItems = [
     { id: 'overview', label: 'Executive Overview', icon: BarChart3 },
     { id: 'facts', label: 'Golden Facts KB', icon: Database, badge: counts.facts || 4 },
@@ -17,6 +21,19 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {} }) {
     { id: 'sandbox', label: 'Live Audit Sandbox', icon: FlaskConical },
     { id: 'reviews', label: 'Review Queue', icon: CheckSquare, badge: counts.reviews || 2 }
   ];
+
+  const handleLogout = async () => {
+    await logout();
+    if (onNotify) onNotify('Logged out successfully');
+    if (onGoHome) onGoHome();
+  };
+
+  const getInitials = (name) => {
+    if (!name) return 'C';
+    const parts = name.split(' ');
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  };
 
   return (
     <aside className="sidebar">
@@ -51,6 +68,28 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {} }) {
       </nav>
 
       <div className="sidebar-footer">
+        {user && (
+          <div className="sidebar-user-card">
+            <div className={`sidebar-user-avatar ${isAdmin ? 'admin' : ''}`}>
+              {getInitials(user.fullName || user.email)}
+            </div>
+            <div className="sidebar-user-info">
+              <span className="sidebar-user-name">{user.fullName || user.email}</span>
+              <span className={`sidebar-user-role ${isAdmin ? 'admin' : ''}`}>
+                {isAdmin ? '👑 Brand Admin' : 'Creator'}
+              </span>
+            </div>
+            <button 
+              className="sidebar-logout-btn" 
+              onClick={handleLogout}
+              title="Sign Out / Log Out"
+              aria-label="Sign Out"
+            >
+              <LogOut size={15} />
+            </button>
+          </div>
+        )}
+
         <div style={{ fontSize: '11px', color: 'var(--text-dim)', textAlign: 'center' }}>
           Split Vision: OpenCV + Gemini RAG<br />
           <strong>Phase 1.5 Integrated</strong>

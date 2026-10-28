@@ -7,8 +7,16 @@ import PolicyRulesManager from './components/PolicyRulesManager';
 import VisualAssetsManager from './components/VisualAssetsManager';
 import LiveAuditSandbox from './components/LiveAuditSandbox';
 import ReviewQueue from './components/ReviewQueue';
+import LandingPage from './components/LandingPage';
+import Grainient from './components/Grainient';
+import AuthModal from './components/AuthModal';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
-export default function App() {
+function MainApp() {
+  const { user } = useAuth();
+  const [viewMode, setViewMode] = useState(() => {
+    return window.location.hash === '#dashboard' ? 'dashboard' : 'landing';
+  });
   const [activeTab, setActiveTab] = useState('overview');
   const [toast, setToast] = useState(null);
   const [checkingApi, setCheckingApi] = useState(false);
@@ -162,6 +170,30 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#dashboard') {
+        setViewMode('dashboard');
+      } else if (!window.location.hash || window.location.hash === '#home') {
+        setViewMode('landing');
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const enterDemo = () => {
+    setViewMode('dashboard');
+    window.location.hash = 'dashboard';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const goHome = () => {
+    setViewMode('landing');
+    window.location.hash = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const triggerToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
@@ -180,73 +212,115 @@ export default function App() {
   };
 
   return (
-    <div className="app-layout">
-      {/* Sidebar Navigation */}
-      <Sidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab}
-        counts={{
-          facts: facts.length,
-          policies: policies.length,
-          assets: swatches.length,
-          reviews: reviews.length
-        }}
-      />
-
-      {/* Main Content Area */}
-      <div className="main-content">
-        <Header 
-          currentTitle={getTabTitle()}
-          apiStatus={apiStatus}
-          onRefreshStatus={checkHealth}
-          checking={checkingApi}
+    <div className="inkloom-root-canvas">
+      {/* Dynamic Animated Grainient Background (React Bits) */}
+      <div className="global-grainient-bg">
+        <Grainient
+          colors={['#120f17', '#2a0f0a', '#9a3412', '#f97316', '#fed7aa']}
+          angle={55}
+          flow={0.9}
+          speed={0.8}
+          silk={0.35}
+          grainAmount={0.06}
+          interactive={true}
+          stir={1.2}
+          clickSwirl={true}
+          intro={false}
         />
-
-        <main className="content-container">
-          {activeTab === 'overview' && (
-            <AnalyticsOverview onNavigate={setActiveTab} />
-          )}
-
-          {activeTab === 'facts' && (
-            <GoldenFactsManager 
-              facts={facts} 
-              setFacts={setFacts} 
-              onNotify={triggerToast} 
-            />
-          )}
-
-          {activeTab === 'policies' && (
-            <PolicyRulesManager 
-              policies={policies} 
-              setPolicies={setPolicies} 
-              onNotify={triggerToast} 
-            />
-          )}
-
-          {activeTab === 'assets' && (
-            <VisualAssetsManager 
-              swatches={swatches} 
-              setSwatches={setSwatches} 
-              onNotify={triggerToast} 
-            />
-          )}
-
-          {activeTab === 'sandbox' && (
-            <LiveAuditSandbox onNotify={triggerToast} />
-          )}
-
-          {activeTab === 'reviews' && (
-            <ReviewQueue 
-              reviews={reviews} 
-              setReviews={setReviews} 
-              onNotify={triggerToast} 
-            />
-          )}
-        </main>
+        <div className={`global-grainient-overlay ${viewMode}`} />
       </div>
 
-      {/* Toast Notification */}
-      {toast && <div className="toast-msg">✓ {toast}</div>}
+      <div className="inkloom-root-content">
+        {viewMode === 'landing' ? (
+          <LandingPage 
+            onEnterDemo={enterDemo} 
+            apiStatus={apiStatus} 
+          />
+        ) : (
+          <div className="app-layout">
+            {/* Sidebar Navigation */}
+            <Sidebar 
+              activeTab={activeTab} 
+              setActiveTab={setActiveTab}
+              counts={{
+                facts: facts.length,
+                policies: policies.length,
+                assets: swatches.length,
+                reviews: reviews.length
+              }}
+              onGoHome={goHome}
+              onNotify={triggerToast}
+            />
+
+            {/* Main Content Area */}
+            <div className="main-content">
+              <Header 
+                currentTitle={getTabTitle()}
+                apiStatus={apiStatus}
+                onRefreshStatus={checkHealth}
+                checking={checkingApi}
+                onGoHome={goHome}
+              />
+
+              <main className="content-container">
+                {activeTab === 'overview' && (
+                  <AnalyticsOverview onNavigate={setActiveTab} />
+                )}
+
+                {activeTab === 'facts' && (
+                  <GoldenFactsManager 
+                    facts={facts} 
+                    setFacts={setFacts} 
+                    onNotify={triggerToast} 
+                  />
+                )}
+
+                {activeTab === 'policies' && (
+                  <PolicyRulesManager 
+                    policies={policies} 
+                    setPolicies={setPolicies} 
+                    onNotify={triggerToast} 
+                  />
+                )}
+
+                {activeTab === 'assets' && (
+                  <VisualAssetsManager 
+                    swatches={swatches} 
+                    setSwatches={setSwatches} 
+                    onNotify={triggerToast} 
+                  />
+                )}
+
+                {activeTab === 'sandbox' && (
+                  <LiveAuditSandbox onNotify={triggerToast} />
+                )}
+
+                {activeTab === 'reviews' && (
+                  <ReviewQueue 
+                    reviews={reviews} 
+                    setReviews={setReviews} 
+                    onNotify={triggerToast} 
+                  />
+                )}
+              </main>
+            </div>
+
+            {/* Toast Notification */}
+            {toast && <div className="toast-msg">✓ {toast}</div>}
+          </div>
+        )}
+      </div>
+
+      {/* Supabase Creator Authentication Modal */}
+      <AuthModal onEnterWorkspace={enterDemo} />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <MainApp />
+    </AuthProvider>
   );
 }

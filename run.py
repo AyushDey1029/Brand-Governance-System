@@ -8,6 +8,12 @@ import sys
 import subprocess
 import webbrowser
 
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.join(ROOT_DIR, "backend-api")
 DASHBOARD_DIR = os.path.join(ROOT_DIR, "admin-dashboard")
@@ -27,32 +33,23 @@ def start_server():
     """Starts the unified FastAPI + React server."""
     ensure_dashboard_built()
     
-    python_exec = VENV_PYTHON if os.path.exists(VENV_PYTHON) else sys.executable
-    print("=" * 65)
-    print("  🚀 INKLOOM AI — BRAND GOVERNANCE PLATFORM")
-    print("=" * 65)
-    print("  • React Admin Dashboard : http://127.0.0.1:8000/")
-    print("  • Interactive API Docs  : http://127.0.0.1:8000/docs")
-    print("  • Health Check          : http://127.0.0.1:8000/health")
-    print("  • Compliance Endpoint   : http://127.0.0.1:8000/api/check-content")
-    print("  • Chrome Extension Port : Connected to http://127.0.0.1:8000")
-    print("=" * 65)
-    print("  Press CTRL+C to terminate.")
-    print("-" * 65)
+    print("=" * 65, flush=True)
+    print("  [Inkloom AI] BRAND GOVERNANCE PLATFORM", flush=True)
+    print("=" * 65, flush=True)
+    print("  * React Admin Dashboard : http://127.0.0.1:8000/", flush=True)
+    print("  * Interactive API Docs  : http://127.0.0.1:8000/docs", flush=True)
+    print("  * Health Check          : http://127.0.0.1:8000/health", flush=True)
+    print("  * Compliance Endpoint   : http://127.0.0.1:8000/api/check-content", flush=True)
+    print("  * Chrome Extension Port : Connected to http://127.0.0.1:8000", flush=True)
+    print("=" * 65, flush=True)
+    print("  Press CTRL+C to terminate.", flush=True)
+    print("-" * 65, flush=True)
 
-    # Launch uvicorn
-    cmd = [
-        python_exec,
-        "-m",
-        "uvicorn",
-        "app.main:app",
-        "--host",
-        "127.0.0.1",
-        "--port",
-        "8000",
-        "--reload"
-    ]
-    subprocess.run(cmd, cwd=BACKEND_DIR)
+    if BACKEND_DIR not in sys.path:
+        sys.path.insert(0, BACKEND_DIR)
+
+    import uvicorn
+    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, log_level="info")
 
 
 if __name__ == "__main__":

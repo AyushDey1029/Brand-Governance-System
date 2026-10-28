@@ -77,6 +77,7 @@ class InMemoryVectorStore(BaseVectorStore):
     def __init__(self):
         self.documents: List[VectorDocument] = []
         self.matrix: Optional[np.ndarray] = None
+        self.offline_matrix: Optional[np.ndarray] = None
         self.vocabulary: Dict[str, int] = {}
         self.idf: Dict[str, float] = {}
         self._is_gemini_embedded: bool = False
@@ -128,7 +129,9 @@ class InMemoryVectorStore(BaseVectorStore):
             if norm > 0:
                 matrix[doc_idx] /= norm
 
-        self.matrix = matrix
+        self.offline_matrix = matrix
+        if not self._is_gemini_embedded:
+            self.matrix = matrix
 
     def _embed_query_offline(self, query: str) -> np.ndarray:
         """Generates offline query vector using the indexed vocabulary."""
@@ -154,6 +157,10 @@ class InMemoryVectorStore(BaseVectorStore):
         """Indexes documents and attempts Gemini embedding generation."""
         self.documents = list(documents)
         settings = get_settings()
+
+        # Always initialize deterministic offline TF-IDF matrix as baseline
+        self._build_offline_vocabulary()
+        logger.info("Indexed %d Golden Facts with offline TF-IDF vector matrix (%d terms)", len(self.documents), len(self.vocabulary))
 
         # Attempt Gemini embedding if API key is present
         if settings.gemini_api_key and settings.gemini_api_key != "your_gemini_api_key_here":
@@ -181,15 +188,11 @@ class InMemoryVectorStore(BaseVectorStore):
                     logger.info("Successfully indexed %d Golden Facts with Gemini embeddings", len(self.documents))
                     return
             except Exception as e:
-                logger.warning("Gemini embedding generation failed (%s). Falling back to offline vector engine.", e)
-
-        # Fallback to offline TF-IDF vector matrix
-        self._build_offline_vocabulary()
-        logger.info("Indexed %d Golden Facts with offline TF-IDF vector matrix (%d terms)", len(self.documents), len(self.vocabulary))
+                logger.warning("Gemini embedding generation failed (%s). Operating via offline vector engine.", e)
 
     def search(self, query: str, top_k: int = 3) -> List[Tuple[VectorDocument, float]]:
         """Finds the most relevant Golden Facts using cosine similarity."""
-        if not self.documents or self.matrix is None:
+        if not self.documents or (self.matrix is None and self.offline_matrix is None):
             return []
 
         settings = get_settings()
@@ -214,13 +217,14 @@ class InMemoryVectorStore(BaseVectorStore):
             except Exception as e:
                 logger.warning("Gemini query embedding failed: %s. Falling back to offline search.", e)
 
-        # Offline vector search
+        # Offline vector search using offline TF-IDF vocabulary matrix
+        target_matrix = self.offline_matrix if self.offline_matrix is not None else self.matrix
         q_vec = self._embed_query_offline(query)
         if np.linalg.norm(q_vec) == 0:
             # If query has no overlapping tokens, return first top_k with zero score
             return [(doc, 0.0) for doc in self.documents[:top_k]]
 
-        scores = np.dot(self.matrix, q_vec)
+        scores = np.dot(target_matrix, q_vec)
         top_indices = np.argsort(scores)[::-1][:top_k]
         return [(self.documents[idx], float(scores[idx])) for idx in top_indices]
 
