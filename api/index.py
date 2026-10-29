@@ -1,11 +1,11 @@
-import os
-import sys
+from fastapi import FastAPI
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BACKEND_DIR = os.path.join(ROOT_DIR, "backend-api")
-if BACKEND_DIR not in sys.path:
-    sys.path.insert(0, BACKEND_DIR)
+app = FastAPI()
 
-from app.main import app as _app
+@app.get("/health")
+def health():
+    return {"status": "healthy", "platform": "vercel-serverless"}
 
-app = _app
+@app.get("/api/test")
+def test():
+    return {"message": "hello from vercel serverless"}
