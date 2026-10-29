@@ -1,28 +1,41 @@
 {
   "version": 2,
-  "buildCommand": "npm --prefix admin-dashboard run build",
-  "outputDirectory": "admin-dashboard/dist",
-  "installCommand": "npm --prefix admin-dashboard install",
-  "rewrites": [
+  "builds": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/index.py"
+      "src": "api/index.py",
+      "use": "@vercel/python"
     },
     {
-      "source": "/health",
-      "destination": "/api/index.py"
+      "src": "admin-dashboard/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "api/index.py"
     },
     {
-      "source": "/test-draft",
-      "destination": "/api/index.py"
+      "src": "/health",
+      "dest": "api/index.py"
     },
     {
-      "source": "/inkloom-extension.zip",
-      "destination": "/api/index.py"
+      "src": "/test-draft",
+      "dest": "api/index.py"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/inkloom-extension.zip",
+      "dest": "api/index.py"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "admin-dashboard/index.html"
     }
   ]
 }
