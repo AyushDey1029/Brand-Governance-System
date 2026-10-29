@@ -7,7 +7,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Teammate Context & Providers
 import { ThemeProvider } from './context/ThemeContext';
-import { NotificationProvider } from './context/NotificationContext';
+import { NotificationProvider, useNotification } from './context/NotificationContext';
 import { WorkspaceProvider, useWorkspace } from './context/WorkspaceContext';
 
 // Teammate Layout & Views
@@ -24,8 +24,36 @@ import { AnalyticsView } from './views/AnalyticsView';
 import { BrandSetupView } from './views/BrandSetupView';
 import { SettingsView } from './views/SettingsView';
 
+const CREATOR_ALLOWED_ROUTES = [
+  'overview',
+  'creator-studio',
+  'golden-facts',
+  'visual-assets',
+  'audit-history',
+];
+
 function DashboardRouter({ onGoHome }) {
-  const { currentRoute } = useWorkspace();
+  const { currentRoute, setCurrentRoute, activeRole } = useWorkspace();
+  const { role, isDemo, status } = useAuth();
+  const { showToast } = useNotification();
+
+  // Enforce Role-Based Route Guards
+  useEffect(() => {
+    if (status === 'signed_out') {
+      onGoHome();
+      return;
+    }
+
+    const isCreator = (role === 'creator' || activeRole === 'CONTENT_CREATOR') && !isDemo;
+    if (isCreator && !CREATOR_ALLOWED_ROUTES.includes(currentRoute)) {
+      setCurrentRoute('overview');
+      showToast({
+        type: 'warning',
+        title: 'Access Restricted',
+        message: "You don't have access to that page.",
+      });
+    }
+  }, [currentRoute, role, activeRole, isDemo, status]);
 
   return (
     <div className="relative min-h-screen bg-[var(--bg-app)] text-[var(--text-primary)]">
@@ -47,8 +75,8 @@ function DashboardRouter({ onGoHome }) {
 }
 
 function MainApp() {
-  const { user } = useAuth();
-  const { setActiveRole, setCurrentRoute } = useWorkspace();
+  const { role, isDemo, enterDemo: authEnterDemo } = useAuth();
+  const { setCurrentRoute } = useWorkspace();
 
   const [viewMode, setViewMode] = useState(() => {
     return window.location.hash === '#dashboard' ? 'dashboard' : 'landing';
@@ -67,17 +95,23 @@ function MainApp() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const enterDemo = (requestedRole) => {
+  const handleEnterWorkspace = (requestedRole) => {
     setViewMode('dashboard');
     window.location.hash = 'dashboard';
-    const isAdmin = requestedRole ? requestedRole === 'admin' : (user?.role === 'admin' || user?.role === 'reviewer');
-    if (isAdmin) {
-      setActiveRole('BRAND_MANAGER');
+    const targetRole = requestedRole || role;
+    if (targetRole === 'admin') {
       setCurrentRoute('overview');
     } else {
-      setActiveRole('CONTENT_CREATOR');
-      setCurrentRoute('creator-studio');
+      setCurrentRoute('overview');
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleEnterDemo = (requestedRole = 'creator') => {
+    authEnterDemo(requestedRole);
+    setViewMode('dashboard');
+    window.location.hash = 'dashboard';
+    setCurrentRoute('overview');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -91,7 +125,7 @@ function MainApp() {
     <>
       {viewMode === 'landing' ? (
         <div className="inkloom-root-canvas">
-          {/* Dynamic Animated Grainient Background (React Bits) */}
+          {/* Dynamic Animated Grainient Background */}
           <div className="global-grainient-bg">
             <Grainient
               colors={['#120f17', '#2a0f0a', '#9a3412', '#f97316', '#fed7aa']}
@@ -109,11 +143,11 @@ function MainApp() {
           </div>
 
           <div className="inkloom-root-content">
-            <LandingPage onEnterDemo={enterDemo} />
+            <LandingPage onEnterDemo={handleEnterDemo} onOpenWorkspace={handleEnterWorkspace} />
           </div>
 
-          {/* Supabase Creator Authentication Modal */}
-          <AuthModal onEnterWorkspace={enterDemo} />
+          {/* Authentication Modal */}
+          <AuthModal onEnterWorkspace={handleEnterWorkspace} />
         </div>
       ) : (
         <DashboardRouter onGoHome={goHome} />
@@ -127,11 +161,11 @@ export default function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <NotificationProvider>
-          <WorkspaceProvider>
-            <AuthProvider>
+          <AuthProvider>
+            <WorkspaceProvider>
               <MainApp />
-            </AuthProvider>
-          </WorkspaceProvider>
+            </WorkspaceProvider>
+          </AuthProvider>
         </NotificationProvider>
       </ThemeProvider>
     </ErrorBoundary>

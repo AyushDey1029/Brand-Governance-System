@@ -21,13 +21,21 @@ import './ArchitectureAndWorkflows.css';
  * - Role-tailored action CTAs ("Open Brand Admin view", "Open Creator Studio")
  * - Strict WCAG AA contrast compliance and semantic HTML
  */
-export default function ArchitectureAndWorkflows({ onEnterDemo }) {
-  const { switchRole } = useAuth();
+export default function ArchitectureAndWorkflows({ onEnterDemo, onOpenWorkspace }) {
+  const { status, isDemo, role: userRole, switchRole } = useAuth();
 
-  const handleLaunchRole = (role) => {
-    switchRole(role);
-    if (onEnterDemo) {
-      onEnterDemo(role);
+  const handleLaunchRole = (targetRole) => {
+    if (status === 'signed_in' && !isDemo) {
+      if (onOpenWorkspace) {
+        onOpenWorkspace(targetRole);
+      } else if (onEnterDemo) {
+        onEnterDemo(targetRole);
+      }
+    } else {
+      switchRole(targetRole);
+      if (onEnterDemo) {
+        onEnterDemo(targetRole);
+      }
     }
   };
 
