@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "buildCommand": "npm --prefix admin-dashboard run build",
+  "outputDirectory": "admin-dashboard/dist",
+  "installCommand": "npm --prefix admin-dashboard install",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/health",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/test-draft",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/inkloom-extension.zip",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
