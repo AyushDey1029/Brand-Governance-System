@@ -1,7 +1,10 @@
 """Authentication and Supabase Client Configuration Routes."""
 from fastapi import APIRouter
 from pydantic import BaseModel
-import psycopg2
+try:
+    import psycopg2
+except ImportError:
+    psycopg2 = None
 from app.config import get_settings
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -26,8 +29,8 @@ async def get_auth_config():
 async def auto_confirm_email(req: ConfirmEmailRequest):
     """Auto-confirms a user email in auth.users so creators are never blocked by unconfirmed emails."""
     settings = get_settings()
-    if not settings.database_url:
-        return {"status": "skipped", "message": "No database URL configured"}
+    if not psycopg2 or not settings.database_url:
+        return {"status": "skipped", "message": "No database URL configured or psycopg2 not installed"}
     
     try:
         conn = psycopg2.connect(settings.database_url)

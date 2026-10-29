@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  inkloom:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: inkloom-ai-platform
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - ENVIRONMENT=production
+    restart: unless-stopped
+

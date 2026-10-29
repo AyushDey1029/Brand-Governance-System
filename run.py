@@ -33,14 +33,17 @@ def start_server():
     """Starts the unified FastAPI + React server."""
     ensure_dashboard_built()
     
+    host = os.environ.get("HOST", "0.0.0.0" if os.environ.get("PORT") else "127.0.0.1")
+    port = int(os.environ.get("PORT", 8000))
+
     print("=" * 65, flush=True)
     print("  [Inkloom AI] BRAND GOVERNANCE PLATFORM", flush=True)
     print("=" * 65, flush=True)
-    print("  * React Admin Dashboard : http://127.0.0.1:8000/", flush=True)
-    print("  * Interactive API Docs  : http://127.0.0.1:8000/docs", flush=True)
-    print("  * Health Check          : http://127.0.0.1:8000/health", flush=True)
-    print("  * Compliance Endpoint   : http://127.0.0.1:8000/api/check-content", flush=True)
-    print("  * Chrome Extension Port : Connected to http://127.0.0.1:8000", flush=True)
+    print(f"  * React Admin Dashboard : http://{host}:{port}/", flush=True)
+    print(f"  * Interactive API Docs  : http://{host}:{port}/docs", flush=True)
+    print(f"  * Health Check          : http://{host}:{port}/health", flush=True)
+    print(f"  * Compliance Endpoint   : http://{host}:{port}/api/check-content", flush=True)
+    print(f"  * Chrome Extension Port : Connected to http://{host}:{port}", flush=True)
     print("=" * 65, flush=True)
     print("  Press CTRL+C to terminate.", flush=True)
     print("-" * 65, flush=True)
@@ -49,7 +52,7 @@ def start_server():
         sys.path.insert(0, BACKEND_DIR)
 
     import uvicorn
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, log_level="info")
+    uvicorn.run("app.main:app", host=host, port=port, log_level="info")
 
 
 if __name__ == "__main__":

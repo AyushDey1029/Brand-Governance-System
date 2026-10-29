@@ -8,7 +8,10 @@ import base64
 import logging
 import math
 from typing import List, Tuple, Optional, Union
-import cv2
+try:
+    import cv2
+except Exception as _cv_err:
+    cv2 = None
 import numpy as np
 import httpx
 
@@ -37,13 +40,34 @@ def rgb_to_hex(r: int, g: int, b: int) -> str:
 def rgb_to_lab(r: int, g: int, b: int) -> Tuple[float, float, float]:
     """Convert sRGB integer tuple [0..255] to standard CIE L*a*b* coordinates.
     
-    Uses standard D65 illuminant via OpenCV with floating point precision.
+    Uses standard D65 illuminant via OpenCV (or pure-math D65 fallback in serverless).
     Returns:
         (L, a, b) where L in [0, 100], a in [-128, 127], b in [-128, 127].
     """
-    rgb_f = np.array([[[r, g, b]]], dtype=np.float32) / 255.0
-    lab = cv2.cvtColor(rgb_f, cv2.COLOR_RGB2LAB)[0, 0]
-    return float(lab[0]), float(lab[1]), float(lab[2])
+    if cv2 is not None:
+        rgb_f = np.array([[[r, g, b]]], dtype=np.float32) / 255.0
+        lab = cv2.cvtColor(rgb_f, cv2.COLOR_RGB2LAB)[0, 0]
+        return float(lab[0]), float(lab[1]), float(lab[2])
+    
+    # Pure-math D65 sRGB to Lab fallback for serverless runtimes lacking OpenCV C-libs
+    sR = r / 255.0
+    sG = g / 255.0
+    sB = b / 255.0
+    R = sR / 12.92 if sR <= 0.04045 else ((sR + 0.055) / 1.055) ** 2.4
+    G = sG / 12.92 if sG <= 0.04045 else ((sG + 0.055) / 1.055) ** 2.4
+    B = sB / 12.92 if sB <= 0.04045 else ((sB + 0.055) / 1.055) ** 2.4
+    X = (R * 0.4124564 + G * 0.3575761 + B * 0.1804375) / 0.95047
+    Y = (R * 0.2126729 + G * 0.7151522 + B * 0.0721750) / 1.00000
+    Z = (R * 0.0193339 + G * 0.1191920 + B * 0.9503041) / 1.08883
+
+    def f_t(t):
+        return t ** (1.0 / 3.0) if t > 0.008856 else (7.787 * t) + (16.0 / 116.0)
+
+    fx, fy, fz = f_t(X), f_t(Y), f_t(Z)
+    L = max(0.0, min(100.0, (116.0 * fy) - 16.0))
+    a = (fx - fy) * 500.0
+    b_val = (fy - fz) * 200.0
+    return float(L), float(a), float(b_val)
 
 
 def hex_to_lab(hex_code: str) -> Tuple[float, float, float]:
@@ -155,6 +179,9 @@ def color_distance_ciede2000(c1: Tuple[int, int, int], c2: Tuple[int, int, int])
 
 def extract_dominant_color_from_bytes(image_bytes: bytes, k: int = 4) -> Tuple[str, Tuple[int, int, int]]:
     """Decodes image bytes and computes the dominant non-background color using OpenCV k-means."""
+    if cv2 is None:
+        settings = get_settings()
+        return settings.brand_primary_hex, hex_to_rgb(settings.brand_primary_hex)
     np_arr = np.frombuffer(image_bytes, np.uint8)
     img_bgr = cv2.imdecode(np_arr, cv2.IMREAD_UNCHANGED)
 
