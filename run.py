@@ -6,7 +6,6 @@ from a single unified process on http://127.0.0.1:8000.
 import os
 import sys
 import subprocess
-import webbrowser
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -24,9 +23,12 @@ VENV_PYTHON = os.path.join(BACKEND_DIR, ".venv", "Scripts", "python.exe")
 def ensure_dashboard_built():
     """Builds React Admin Dashboard if dist folder is missing."""
     if not os.path.exists(DIST_DIR) or not os.path.exists(os.path.join(DIST_DIR, "index.html")):
-        print("[Inkloom] Building React Admin Dashboard production bundle...")
-        subprocess.run(["npm", "run", "build"], cwd=DASHBOARD_DIR, shell=True, check=True)
-        print("[Inkloom] React Dashboard build complete.")
+        try:
+            print("[Inkloom] Building React Admin Dashboard production bundle...", flush=True)
+            subprocess.run(["npm", "run", "build"], cwd=DASHBOARD_DIR, shell=True, check=True)
+            print("[Inkloom] React Dashboard build complete.", flush=True)
+        except Exception as err:
+            print(f"[Inkloom] Notice: Dashboard build step ({err}). Serving existing or fallback API.", flush=True)
 
 
 def start_server():
