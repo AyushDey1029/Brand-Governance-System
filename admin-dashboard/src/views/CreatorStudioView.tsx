@@ -52,6 +52,8 @@ import { useNotification } from "../context/NotificationContext";
 import { AuditFinding } from "../types";
 import { api } from "../api/client";
 import { APPROVED_IMAGE_REFERENCES, BrandImageReference } from "./GoldenFactsView";
+import { useAuth } from "../context/AuthContext";
+import { userDataService } from "../services/userDataService";
 
 interface VersionSnapshot {
   id: string;
@@ -81,6 +83,7 @@ const CONTENT_TYPE_OPTIONS = [
 
 export const CreatorStudioView: React.FC = () => {
   const { activeBrand, brands, switchBrand, isDemoMode } = useWorkspace();
+  const { user, isDemo } = useAuth();
   const { isMotionReduced } = useTheme();
   const { showToast } = useNotification();
 
@@ -91,10 +94,8 @@ export const CreatorStudioView: React.FC = () => {
   const [targetAudience, setTargetAudience] = useState("");
   const [referenceBrief, setReferenceBrief] = useState("");
 
-  // Editor states
-  const [draftText, setDraftText] = useState(
-    "Nexus Cloud delivers guaranteed 100% uptime with our unbeatable 30% discount this quarter. It is the cheapest cloud infrastructure available anywhere!"
-  );
+  // Editor states (scoped to active user & workspace)
+  const [draftText, setDraftText] = useState("");
   const [isAuditing, setIsAuditing] = useState(false);
   const [currentAuditId, setCurrentAuditId] = useState<string | null>(null);
   const [auditScore, setAuditScore] = useState<number | null>(null);
@@ -124,6 +125,31 @@ export const CreatorStudioView: React.FC = () => {
   const [versionHistory, setVersionHistory] = useState<VersionSnapshot[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+  const autosaveTimerRef = useRef<any>(null);
+
+  // Hydrate draft text & history scoped to user and workspace
+  useEffect(() => {
+    const userId = user?.id || "default";
+    const brandId = activeBrand?.id || "brand-nexus";
+    const saved = userDataService.getDraft(brandId, userId, isDemo);
+    setDraftText(saved.text);
+    setVersionHistory(saved.snapshots || []);
+    setLastSavedTime(saved.lastSavedAt);
+  }, [user?.id, activeBrand?.id, isDemo]);
+
+  const handleDraftChange = (newText: string) => {
+    setDraftText(newText);
+    setHasUnsavedChanges(true);
+
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      const userId = user?.id || "default";
+      const brandId = activeBrand?.id || "brand-nexus";
+      const timeStr = userDataService.saveDraft(brandId, userId, newText, isDemo);
+      setLastSavedTime(timeStr);
+      setHasUnsavedChanges(false);
+    }, 800);
+  };
 
   // AI Assistant states
   const [assistantQuery, setAssistantQuery] = useState("");
@@ -284,24 +310,26 @@ export const CreatorStudioView: React.FC = () => {
   }, [selectedFindingId]);
 
   // Manual Save Version
-  const handleSaveVersion = (customLabel?: string) => {
-    const newVersion: VersionSnapshot = {
-      id: `v-${Date.now()}`,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      label: customLabel || `Revision ${versionHistory.length + 1} (${channel})`,
-      text: draftText,
-      score: auditScore,
-    };
-    setVersionHistory((prev) => [newVersion, ...prev]);
-    setHasUnsavedChanges(false);
-    setLastSavedTime(
-      new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-    );
-    showToast({
-      type: "success",
-      title: "Draft Version Saved",
-      message: `Captured snapshot: "${newVersion.label}".`,
-    });
+  const handleSaveVersion = (customLabel?: string, silent = false) => {
+    try {
+      const label = customLabel || `Revision ${versionHistory.length + 1} (${channel})`;
+      const userId = user?.id || "default";
+      const brandId = activeBrand?.id || "brand-nexus";
+      const updatedSnapshots = userDataService.saveSnapshot(brandId, userId, label, draftText, auditScore, isDemo);
+      setVersionHistory(updatedSnapshots);
+      setHasUnsavedChanges(false);
+      const saveTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      setLastSavedTime(saveTime);
+      if (!silent && !customLabel) {
+        showToast({
+          type: "success",
+          title: "Draft Version Saved",
+          message: `Captured snapshot: "${label}".`,
+        });
+      }
+    } catch (e) {
+      console.warn("Snapshot save error:", e);
+    }
   };
 
   const handleRestoreVersion = (snapshot: VersionSnapshot) => {
@@ -313,6 +341,111 @@ export const CreatorStudioView: React.FC = () => {
       title: "Version Restored",
       message: `Restored draft from ${snapshot.timestamp} (${snapshot.label}).`,
     });
+  };
+
+  // Deterministic client rule engine for instant sub-millisecond evaluation
+  const evaluateClientRules = (text: string): AuditFinding[] => {
+    const detectedFindings: AuditFinding[] = [];
+    const lower = text.toLowerCase();
+
+    // Rule 1: SLA Uptime check
+    if (lower.includes("guaranteed 100% uptime") || lower.includes("100% uptime")) {
+      const snippet = text.includes("guaranteed 100% uptime")
+        ? "guaranteed 100% uptime"
+        : "100% uptime";
+      detectedFindings.push({
+        id: `finding-sla-${Date.now()}`,
+        findingType: "FACTUAL_INACCURACY",
+        severity: "CRITICAL",
+        originalSnippet: snippet,
+        explanation: "Contradicts verified Enterprise SLA agreement. Nexus commitment is 99.99% multi-region uptime, not 100%.",
+        citationReference: "Enterprise SLA Agreement v2026.1, Section 4.2",
+        suggestedFix: "guaranteed 99.99% multi-region uptime",
+        isApplied: false,
+      });
+    }
+
+    // Rule 2: Unverified discount superlative
+    if (lower.includes("unbeatable 30% discount") || lower.includes("unbeatable")) {
+      const snippet = text.includes("unbeatable 30% discount")
+        ? "unbeatable 30% discount"
+        : "unbeatable";
+      detectedFindings.push({
+        id: `finding-pricing-${Date.now() + 1}`,
+        findingType: "PROHIBITED_CLAIM",
+        severity: "WARNING",
+        originalSnippet: snippet,
+        explanation: "Superlative claim 'unbeatable' violates brand guardrail on competitive substantiation without FTC audit proof.",
+        citationReference: "Brand Guardrail #2 (Superlatives & Pricing Claims)",
+        suggestedFix: "verified 30% quarterly tier discount",
+        isApplied: false,
+      });
+    }
+
+    // Rule 3: Disallowed comparative superlative 'cheapest'
+    if (lower.includes("cheapest cloud infrastructure") || lower.includes("cheapest")) {
+      const snippet = text.includes("cheapest cloud infrastructure")
+        ? "cheapest cloud infrastructure"
+        : "cheapest";
+      detectedFindings.push({
+        id: `finding-cheapest-${Date.now() + 2}`,
+        findingType: "PROHIBITED_CLAIM",
+        severity: "WARNING",
+        originalSnippet: snippet,
+        explanation: "Disallowed comparative superlative 'cheapest'. Must refer to TCO optimization or price-performance index.",
+        citationReference: "Brand Guardrail #5 (Comparative Market Claims)",
+        suggestedFix: "most cost-optimized cloud infrastructure",
+        isApplied: false,
+      });
+    }
+
+    // Rule 4: Outdated $29 pricing check
+    if (lower.includes("$29") || lower.includes("29/mo")) {
+      const match = text.match(/\$29(\/mo|\/month)?/i);
+      const snippet = match ? match[0] : "$29/mo";
+      detectedFindings.push({
+        id: `finding-legacy-price-${Date.now() + 3}`,
+        findingType: "FACTUAL_INACCURACY",
+        severity: "CRITICAL",
+        originalSnippet: snippet,
+        explanation: "Outdated legacy starter pricing. Current enterprise starter tier was updated to $49/mo in Q3.",
+        citationReference: "Golden Facts: Pricing Matrix v2.4, Item 1",
+        suggestedFix: "$49/month",
+        isApplied: false,
+      });
+    }
+
+    // Rule 5: Disallowed \"magic AI\" hype
+    if (lower.includes("magic ai")) {
+      const match = text.match(/magic ai/i);
+      const snippet = match ? match[0] : "magic AI";
+      detectedFindings.push({
+        id: `finding-magic-ai-${Date.now() + 4}`,
+        findingType: "PROHIBITED_TERM",
+        severity: "WARNING",
+        originalSnippet: snippet,
+        explanation: "Banned buzzword 'magic AI'. Inkloom brand policy mandates explainable and deterministic terminology.",
+        citationReference: "Brand Style Guide: Banned Terminology 2026, Section 3",
+        suggestedFix: "high-confidence AI workflows",
+        isApplied: false,
+      });
+    }
+
+    // Rule 6: Absolute guarantee \"100% bug free\"
+    if (lower.includes("100% bug free")) {
+      detectedFindings.push({
+        id: `finding-bug-free-${Date.now() + 5}`,
+        findingType: "PROHIBITED_CLAIM",
+        severity: "CRITICAL",
+        originalSnippet: "100% bug free",
+        explanation: "Disallowed compliance guarantee '100% bug free'. Legal risk for unprovable absolutes.",
+        citationReference: "Brand Style Guide: Banned Terminology 2026, Section 3",
+        suggestedFix: "extensively tested and verified",
+        isApplied: false,
+      });
+    }
+
+    return detectedFindings;
   };
 
   // Run Text Audit
@@ -330,263 +463,204 @@ export const CreatorStudioView: React.FC = () => {
     setHasEscalated(false);
     setActiveTab("governance");
 
-    if (imagePreviewUrl) {
-      runVisualAudit();
-    }
-
-    const brandIdToUse = activeBrand?.id || "brand-nexus";
-    let auditSuccess = false;
-
-    // Tier 1: If real tokens exist, attempt authenticated backend audit endpoint
-    if (api.hasTokens() && brandIdToUse && !brandIdToUse.startsWith("brand-")) {
-      try {
-        const response = await api.auditText(brandIdToUse, {
-          draft_text: draftText,
-          channel,
-        });
-
-        setCurrentAuditId(response.audit_id);
-        setAuditScore(response.overall_score);
-        setAuditStatus(response.status as any);
-        setAuditSummary(response.summary || "Evaluation completed against active brand facts & rules.");
-
-        const mappedFindings: AuditFinding[] = (response.findings || []).map((f, idx) => ({
-          id: f.id || `finding-${idx}-${Date.now()}`,
-          findingType: f.finding_type as any,
-          severity: f.severity,
-          originalSnippet: f.original_snippet,
-          explanation: f.explanation,
-          citationReference: f.citation_reference,
-          suggestedFix: f.suggested_fix,
-          isApplied: false,
-        }));
-
-        setFindings(mappedFindings);
-        setRejectedFindingIds([]);
-        if (mappedFindings.length > 0) {
-          setSelectedFindingId(mappedFindings[0].id);
-          setExpandedFindingIds([mappedFindings[0].id]);
-        }
-        handleSaveVersion(`Audited: Score ${response.overall_score}`);
-        showToast({
-          type: response.overall_score >= 80 ? "success" : "info",
-          title: "Governance Audit Completed",
-          message: response.summary || `Evaluated against brand facts. Score: ${response.overall_score}/100.`,
-        });
-        auditSuccess = true;
-      } catch (err) {
-        console.warn("Authenticated audit failed, trying public evaluation engine:", err);
+    try {
+      if (imagePreviewUrl) {
+        runVisualAudit();
       }
-    }
 
-    // Tier 2: Try public backend endpoint /api/check-content (dual RAG + OpenCV engine, zero auth needed)
-    if (!auditSuccess) {
-      try {
-        const res = await fetch("/api/check-content", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text: draftText,
-            channel: channel,
-            image_urls: imagePreviewUrl ? [imagePreviewUrl] : [],
-          }),
-        });
+      const brandIdToUse = activeBrand?.id || "brand-nexus";
+      let auditSuccess = false;
 
-        if (res.ok) {
-          const data = await res.json();
-          const score = typeof data.compliance_score === "number" ? data.compliance_score : 54;
-          const status = score >= 90 ? "PASSED" : score >= 70 ? "WARNINGS_RESOLVABLE" : "NEEDS_REVIEW";
-          const summary = data.summary || "Dual-engine governance evaluation completed.";
-
-          const mappedFindings: AuditFinding[] = (data.text_evaluations || []).map((item: any, idx: number) => {
-            let findingType: AuditFinding["findingType"] = "FACTUAL_INACCURACY";
-            const issueLower = (item.issue || "").toLowerCase();
-            if (issueLower.includes("banned") || issueLower.includes("superlative") || issueLower.includes("prohibited")) {
-              findingType = "PROHIBITED_CLAIM";
-            } else if (issueLower.includes("pricing") || issueLower.includes("sla") || issueLower.includes("outdated") || issueLower.includes("factual")) {
-              findingType = "FACTUAL_INACCURACY";
-            } else if (issueLower.includes("tone")) {
-              findingType = "TONE_DEVIATION";
-            } else if (issueLower.includes("disclosure")) {
-              findingType = "MISSING_DISCLOSURE";
-            }
-
-            let severity: AuditFinding["severity"] = "WARNING";
-            if (item.severity === "high") severity = "CRITICAL";
-            else if (item.severity === "info") severity = "SUGGESTION";
-
-            return {
-              id: `finding-${idx + 1}-${Date.now()}`,
-              findingType,
-              severity,
-              originalSnippet: item.claim,
-              explanation: item.issue,
-              citationReference: item.citation,
-              suggestedFix: item.suggested_rewrite,
-              isApplied: false,
-            };
+      // Tier 1: If real tokens exist, attempt authenticated backend audit endpoint
+      if (api.hasTokens() && brandIdToUse && !brandIdToUse.startsWith("brand-")) {
+        try {
+          const response = await api.auditText(brandIdToUse, {
+            draft_text: draftText,
+            channel,
           });
 
-          setCurrentAuditId(`audit-${Date.now()}`);
-          setAuditScore(score);
-          setAuditStatus(status);
-          setAuditSummary(summary);
+          setCurrentAuditId(response.audit_id);
+          setAuditScore(response.overall_score);
+          setAuditStatus(response.status as any);
+          setAuditSummary(response.summary || "Evaluation completed against active brand facts & rules.");
+
+          const mappedFindings: AuditFinding[] = (response.findings || []).map((f, idx) => ({
+            id: f.id || `finding-${idx}-${Date.now()}`,
+            findingType: f.finding_type as any,
+            severity: f.severity,
+            originalSnippet: f.original_snippet,
+            explanation: f.explanation,
+            citationReference: f.citation_reference,
+            suggestedFix: f.suggested_fix,
+            isApplied: false,
+          }));
+
           setFindings(mappedFindings);
           setRejectedFindingIds([]);
           if (mappedFindings.length > 0) {
             setSelectedFindingId(mappedFindings[0].id);
             setExpandedFindingIds([mappedFindings[0].id]);
           }
-          handleSaveVersion(`Audited: Score ${score}`);
+          handleSaveVersion(`Audited: Score ${response.overall_score}`, true);
           showToast({
-            type: score >= 80 ? "success" : "info",
+            type: response.overall_score >= 80 ? "success" : "info",
             title: "Governance Audit Completed",
-            message: summary,
+            message: response.summary || `Evaluated against brand facts. Score: ${response.overall_score}/100.`,
           });
           auditSuccess = true;
+        } catch (err) {
+          console.warn("Authenticated audit failed, trying public evaluation engine:", err);
         }
-      } catch (fetchErr) {
-        console.warn("Public /api/check-content unreachable, running client rule engine:", fetchErr);
       }
-    }
 
-    // Tier 3: Resilient Client-Side Evaluation Engine (100% offline & demo proof)
-    if (!auditSuccess) {
-      const detectedFindings: AuditFinding[] = [];
-      const lower = draftText.toLowerCase();
+      // Tier 2: Try public backend endpoint /api/check-content (dual RAG + OpenCV engine, zero auth needed)
+      if (!auditSuccess) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout safeguard
 
-      // Rule 1: SLA Uptime check
-      if (lower.includes("guaranteed 100% uptime") || lower.includes("100% uptime")) {
-        const snippet = draftText.includes("guaranteed 100% uptime")
-          ? "guaranteed 100% uptime"
-          : "100% uptime";
-        detectedFindings.push({
-          id: `finding-sla-${Date.now()}`,
-          findingType: "FACTUAL_INACCURACY",
-          severity: "CRITICAL",
-          originalSnippet: snippet,
-          explanation: "Contradicts verified Enterprise SLA agreement. Nexus commitment is 99.99% multi-region uptime, not 100%.",
-          citationReference: "Enterprise SLA Agreement v2026.1, Section 4.2",
-          suggestedFix: "guaranteed 99.99% multi-region uptime",
-          isApplied: false,
+          const res = await fetch("/api/check-content", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              text: draftText,
+              channel: channel,
+              image_urls: imagePreviewUrl ? [imagePreviewUrl] : [],
+            }),
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+
+          if (res.ok) {
+            const data = await res.json();
+            let score = typeof data.compliance_score === "number" ? data.compliance_score : 54;
+            let summary = data.summary || "Dual-engine governance evaluation completed.";
+
+            const backendFindings: AuditFinding[] = (data.text_evaluations || []).map((item: any, idx: number) => {
+              let findingType: AuditFinding["findingType"] = "FACTUAL_INACCURACY";
+              const issueLower = (item.issue || "").toLowerCase();
+              if (issueLower.includes("banned") || issueLower.includes("superlative") || issueLower.includes("prohibited")) {
+                findingType = "PROHIBITED_CLAIM";
+              } else if (issueLower.includes("pricing") || issueLower.includes("sla") || issueLower.includes("outdated") || issueLower.includes("factual")) {
+                findingType = "FACTUAL_INACCURACY";
+              } else if (issueLower.includes("tone")) {
+                findingType = "TONE_DEVIATION";
+              } else if (issueLower.includes("disclosure")) {
+                findingType = "MISSING_DISCLOSURE";
+              }
+
+              let severity: AuditFinding["severity"] = "WARNING";
+              if (item.severity === "high") severity = "CRITICAL";
+              else if (item.severity === "info") severity = "SUGGESTION";
+
+              return {
+                id: `finding-${idx + 1}-${Date.now()}`,
+                findingType,
+                severity,
+                originalSnippet: item.claim,
+                explanation: item.issue,
+                citationReference: item.citation,
+                suggestedFix: item.suggested_rewrite,
+                isApplied: false,
+              };
+            });
+
+            // Merge with deterministic client rules to ensure complete coverage of core brand invariants
+            const deterministic = evaluateClientRules(draftText);
+            const mergedFindings: AuditFinding[] = [...backendFindings];
+            for (const det of deterministic) {
+              const alreadyCovered = mergedFindings.some(
+                (bf) => bf.originalSnippet.toLowerCase().includes(det.originalSnippet.toLowerCase()) ||
+                        det.originalSnippet.toLowerCase().includes(bf.originalSnippet.toLowerCase())
+              );
+              if (!alreadyCovered) {
+                mergedFindings.push(det);
+              }
+            }
+
+            if (mergedFindings.length > 0) {
+              let recalcScore = 100;
+              for (const f of mergedFindings) {
+                if (f.severity === "CRITICAL") recalcScore -= 25;
+                else if (f.severity === "WARNING") recalcScore -= 11;
+                else recalcScore -= 5;
+              }
+              score = Math.max(15, Math.min(100, recalcScore));
+              summary = `Audit flagged ${mergedFindings.length} issue${mergedFindings.length > 1 ? "s" : ""} across SLAs and market claims. Actionable 1-click rewrites are available.`;
+            }
+
+            const status = score >= 90 ? "PASSED" : score >= 70 ? "WARNINGS_RESOLVABLE" : "NEEDS_REVIEW";
+
+            setCurrentAuditId(`audit-${Date.now()}`);
+            setAuditScore(score);
+            setAuditStatus(status);
+            setAuditSummary(summary);
+            setFindings(mergedFindings);
+            setRejectedFindingIds([]);
+            if (mergedFindings.length > 0) {
+              setSelectedFindingId(mergedFindings[0].id);
+              setExpandedFindingIds([mergedFindings[0].id]);
+            }
+            handleSaveVersion(`Audited: Score ${score}`, true);
+            showToast({
+              type: score >= 80 ? "success" : "info",
+              title: "Governance Audit Completed",
+              message: summary,
+            });
+            auditSuccess = true;
+          }
+        } catch (fetchErr) {
+          console.warn("Public /api/check-content unreachable or timed out, running client rule engine:", fetchErr);
+        }
+      }
+
+      // Tier 3: Resilient Client-Side Evaluation Engine (100% offline & demo proof)
+      if (!auditSuccess) {
+        const detectedFindings = evaluateClientRules(draftText);
+
+        // Compute score
+        let score = 100;
+        for (const f of detectedFindings) {
+          if (f.severity === "CRITICAL") score -= 25;
+          else if (f.severity === "WARNING") score -= 11;
+          else score -= 5;
+        }
+        score = Math.max(15, Math.min(100, score));
+
+        const status = score >= 90 ? "PASSED" : score >= 70 ? "WARNINGS_RESOLVABLE" : "NEEDS_REVIEW";
+        const summary =
+          detectedFindings.length === 0
+            ? "All evaluated copy strictly adheres to brand Golden Facts and guardrails."
+            : `Audit flagged ${detectedFindings.length} issue${detectedFindings.length > 1 ? "s" : ""} across SLAs and market claims. Actionable 1-click rewrites are available.`;
+
+        setCurrentAuditId(`audit-${Date.now()}`);
+        setAuditScore(score);
+        setAuditStatus(status);
+        setAuditSummary(summary);
+        setFindings(detectedFindings);
+        setRejectedFindingIds([]);
+        if (detectedFindings.length > 0) {
+          setSelectedFindingId(detectedFindings[0].id);
+          setExpandedFindingIds([detectedFindings[0].id]);
+        }
+        handleSaveVersion(`Audited: Score ${score}`, true);
+
+        showToast({
+          type: score >= 80 ? "success" : "info",
+          title: "Governance Audit Completed",
+          message: summary,
         });
       }
-
-      // Rule 2: Unverified discount superlative
-      if (lower.includes("unbeatable 30% discount") || lower.includes("unbeatable")) {
-        const snippet = draftText.includes("unbeatable 30% discount")
-          ? "unbeatable 30% discount"
-          : "unbeatable";
-        detectedFindings.push({
-          id: `finding-pricing-${Date.now()}`,
-          findingType: "PROHIBITED_CLAIM",
-          severity: "WARNING",
-          originalSnippet: snippet,
-          explanation: "Superlative claim 'unbeatable' violates brand guardrail on competitive substantiation without FTC audit proof.",
-          citationReference: "Brand Guardrail #2 (Superlatives & Pricing Claims)",
-          suggestedFix: "verified 30% quarterly tier discount",
-          isApplied: false,
-        });
-      }
-
-      // Rule 3: Disallowed comparative superlative 'cheapest'
-      if (lower.includes("cheapest cloud infrastructure") || lower.includes("cheapest")) {
-        const snippet = draftText.includes("cheapest cloud infrastructure")
-          ? "cheapest cloud infrastructure"
-          : "cheapest";
-        detectedFindings.push({
-          id: `finding-cheapest-${Date.now()}`,
-          findingType: "PROHIBITED_CLAIM",
-          severity: "WARNING",
-          originalSnippet: snippet,
-          explanation: "Disallowed comparative superlative 'cheapest'. Must refer to TCO optimization or price-performance index.",
-          citationReference: "Brand Guardrail #5 (Comparative Market Claims)",
-          suggestedFix: "most cost-optimized cloud infrastructure",
-          isApplied: false,
-        });
-      }
-
-      // Rule 4: Outdated $29 pricing check
-      if (lower.includes("$29") || lower.includes("29/mo")) {
-        const match = draftText.match(/\$29(\/mo|\/month)?/i);
-        const snippet = match ? match[0] : "$29/mo";
-        detectedFindings.push({
-          id: `finding-legacy-price-${Date.now()}`,
-          findingType: "FACTUAL_INACCURACY",
-          severity: "CRITICAL",
-          originalSnippet: snippet,
-          explanation: "Outdated legacy starter pricing. Current enterprise starter tier was updated to $49/mo in Q3.",
-          citationReference: "Golden Facts: Pricing Matrix v2.4, Item 1",
-          suggestedFix: "$49/month",
-          isApplied: false,
-        });
-      }
-
-      // Rule 5: Disallowed "magic AI" hype
-      if (lower.includes("magic ai")) {
-        const match = draftText.match(/magic ai/i);
-        const snippet = match ? match[0] : "magic AI";
-        detectedFindings.push({
-          id: `finding-magic-ai-${Date.now()}`,
-          findingType: "PROHIBITED_TERM",
-          severity: "WARNING",
-          originalSnippet: snippet,
-          explanation: "Banned buzzword 'magic AI'. Inkloom brand policy mandates explainable and deterministic terminology.",
-          citationReference: "Brand Style Guide: Banned Terminology 2026, Section 3",
-          suggestedFix: "high-confidence AI workflows",
-          isApplied: false,
-        });
-      }
-
-      // Rule 6: Absolute guarantee "100% bug free"
-      if (lower.includes("100% bug free")) {
-        detectedFindings.push({
-          id: `finding-bug-free-${Date.now()}`,
-          findingType: "PROHIBITED_CLAIM",
-          severity: "CRITICAL",
-          originalSnippet: "100% bug free",
-          explanation: "Disallowed compliance guarantee '100% bug free'. Legal risk for unprovable absolutes.",
-          citationReference: "Brand Style Guide: Banned Terminology 2026, Section 3",
-          suggestedFix: "extensively tested and verified",
-          isApplied: false,
-        });
-      }
-
-      // Compute score
-      let score = 100;
-      for (const f of detectedFindings) {
-        if (f.severity === "CRITICAL") score -= 25;
-        else if (f.severity === "WARNING") score -= 11;
-        else score -= 5;
-      }
-      score = Math.max(15, Math.min(100, score));
-
-      const status = score >= 90 ? "PASSED" : score >= 70 ? "WARNINGS_RESOLVABLE" : "NEEDS_REVIEW";
-      const summary =
-        detectedFindings.length === 0
-          ? "All evaluated copy strictly adheres to brand Golden Facts and guardrails."
-          : `Audit flagged ${detectedFindings.length} issue${detectedFindings.length > 1 ? "s" : ""} across SLAs and market claims. Actionable 1-click rewrites are available.`;
-
-      setCurrentAuditId(`audit-${Date.now()}`);
-      setAuditScore(score);
-      setAuditStatus(status);
-      setAuditSummary(summary);
-      setFindings(detectedFindings);
-      setRejectedFindingIds([]);
-      if (detectedFindings.length > 0) {
-        setSelectedFindingId(detectedFindings[0].id);
-        setExpandedFindingIds([detectedFindings[0].id]);
-      }
-      handleSaveVersion(`Audited: Score ${score}`);
-
+    } catch (generalErr) {
+      console.error("Audit error:", generalErr);
       showToast({
-        type: score >= 80 ? "success" : "info",
-        title: "Governance Audit Completed",
-        message: summary,
+        type: "error",
+        title: "Audit Encountered an Issue",
+        message: "An unexpected error occurred during audit evaluation.",
       });
+    } finally {
+      setIsAuditing(false);
     }
-
-    setIsAuditing(false);
   };
 
   // Keyboard shortcut Ctrl+Enter to run audit
@@ -596,7 +670,6 @@ export const CreatorStudioView: React.FC = () => {
       handleAudit();
     }
   };
-
 
   // Apply all pending rewrites
   const handleApplyAllRewrites = () => {
@@ -1323,11 +1396,23 @@ export const CreatorStudioView: React.FC = () => {
                   <Textarea
                     rows={12}
                     value={draftText}
-                    onChange={(e) => setDraftText(e.target.value)}
+                    onChange={(e) => handleDraftChange(e.target.value)}
                     onKeyDown={handleEditorKeyDown}
-                    placeholder="Write, paste, or draft your creative copy here. Press Ctrl+Enter to audit..."
+                    placeholder="Paste or write your draft here..."
                     className="font-sans text-[16px] leading-[1.6] tracking-normal p-4 bg-[var(--bg-surface-subtle)] focus:bg-[var(--bg-surface)] border-[var(--border-default)] rounded-xl transition-colors min-h-[300px]"
                   />
+                  {!draftText && (
+                    <div className="mt-2 flex items-center justify-between text-xs text-[var(--text-muted)] px-1">
+                      <span>Canvas is empty. Paste or write your draft, or start from a sample:</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDraftChange("Nexus Cloud delivers guaranteed 100% uptime with our unbeatable 30% discount this quarter. It is the cheapest cloud infrastructure available anywhere!")}
+                        className="text-[var(--accent-text)] hover:underline font-semibold cursor-pointer"
+                      >
+                        Insert sample text
+                      </button>
+                    </div>
+                  )}
                   {isAuditing && (
                     <div className="absolute inset-0 bg-[var(--bg-surface)]/60 backdrop-blur-xs flex items-center justify-center rounded-xl pointer-events-none">
                       <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--accent-border)] shadow-lg">

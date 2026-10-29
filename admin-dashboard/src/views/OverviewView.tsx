@@ -26,30 +26,51 @@ import {
   ShieldCheck,
   Edit3,
   PenTool,
-  Plus
+  Plus,
+  Users,
+  CheckSquare
 } from "lucide-react";
 import { useWorkspace } from "../context/WorkspaceContext";
+import { useAuth } from "../context/AuthContext";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../design-system/Card";
 import { Button } from "../design-system/Button";
 import { Badge } from "../design-system/Badge";
 import { PageHeader } from "../components/PageHeader";
 import { api, AnalyticsOverview, ReviewItemDetail, AuditEventItem } from "../api/client";
-import { MOCK_GOLDEN_FACTS, MOCK_BRAND_RULES } from "../data/mockData";
+import { userDataService, UserAuditRecord, AdminOnboardingState } from "../services/userDataService";
 
 export const OverviewView: React.FC = () => {
   const { activeBrand, activeRole, setCurrentRoute, isDemoMode } = useWorkspace();
-  const isAdmin = activeRole === "OWNER" || activeRole === "BRAND_MANAGER" || activeRole === "SUPER_ADMIN";
+  const { user, role: authRole, isDemo } = useAuth();
+  const isAdmin = activeRole === "OWNER" || activeRole === "BRAND_MANAGER" || activeRole === "SUPER_ADMIN" || authRole === "admin";
 
   const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null);
   const [pendingReviews, setPendingReviews] = useState<ReviewItemDetail[]>([]);
   const [recentAudits, setRecentAudits] = useState<AuditEventItem[]>([]);
+  const [userAudits, setUserAudits] = useState<UserAuditRecord[]>([]);
+  const [adminOnboarding, setAdminOnboarding] = useState<AdminOnboardingState>({
+    factsAdded: false,
+    rulesAdded: false,
+    teamInvited: false,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Timeframe and chart controls
   const [timeframe, setTimeframe] = useState<"7d" | "14d" | "30d">("7d");
-  const [chartMetric, setChartMetric] = useState<"pass_rate" | "volume">("pass_rate");
   const [hoveredDayIndex, setHoveredDayIndex] = useState<number | null>(null);
+
+  // Load user-scoped data
+  useEffect(() => {
+    const userId = user?.id || "default";
+    const brandId = activeBrand?.id || "brand-nexus";
+
+    const audits = userDataService.getAudits(brandId, userId, isDemo);
+    setUserAudits(audits);
+
+    const onboarding = userDataService.getAdminOnboarding(brandId, isDemo);
+    setAdminOnboarding(onboarding);
+  }, [user?.id, activeBrand?.id, isDemo]);
 
   const loadDashboardData = async (showRefreshIndicator = false) => {
     if (!activeBrand?.id) return;
@@ -60,20 +81,22 @@ export const OverviewView: React.FC = () => {
     }
 
     try {
-      const [analyticsRes, reviewsRes, auditsRes] = await Promise.allSettled([
-        api.getAnalytics(activeBrand.id),
-        api.listReviews(activeBrand.id, "AWAITING_REVIEW"),
-        api.listAuditEvents(activeBrand.id, { limit: 8 }),
-      ]);
+      if (isDemo) {
+        const [analyticsRes, reviewsRes, auditsRes] = await Promise.allSettled([
+          api.getAnalytics(activeBrand.id),
+          api.listReviews(activeBrand.id, "AWAITING_REVIEW"),
+          api.listAuditEvents(activeBrand.id, { limit: 8 }),
+        ]);
 
-      if (analyticsRes.status === "fulfilled") {
-        setAnalytics(analyticsRes.value);
-      }
-      if (reviewsRes.status === "fulfilled") {
-        setPendingReviews(reviewsRes.value || []);
-      }
-      if (auditsRes.status === "fulfilled") {
-        setRecentAudits(auditsRes.value || []);
+        if (analyticsRes.status === "fulfilled") {
+          setAnalytics(analyticsRes.value);
+        }
+        if (reviewsRes.status === "fulfilled") {
+          setPendingReviews(reviewsRes.value || []);
+        }
+        if (auditsRes.status === "fulfilled") {
+          setRecentAudits(auditsRes.value || []);
+        }
       }
     } catch (err) {
       console.error("[Executive Cockpit] Failed to load data:", err);
@@ -85,23 +108,30 @@ export const OverviewView: React.FC = () => {
 
   useEffect(() => {
     loadDashboardData();
-  }, [activeBrand?.id]);
+  }, [activeBrand?.id, isDemo]);
 
-  // Derived counts from single source of truth
+  // Scoped Golden Facts & Guardrails counts
   const goldenFactsCount = useMemo(() => {
-    return MOCK_GOLDEN_FACTS.filter((f) => f.brandId === activeBrand.id).length || activeBrand.goldenFactsCount || 4;
-  }, [activeBrand.id, activeBrand.goldenFactsCount]);
+    return userDataService.getGoldenFacts(activeBrand.id, isDemo).length;
+  }, [activeBrand.id, isDemo]);
 
   const guardrailsCount = useMemo(() => {
-    return MOCK_BRAND_RULES.filter((r) => r.brandId === activeBrand.id).length || activeBrand.activeRulesCount || 4;
-  }, [activeBrand.id, activeBrand.activeRulesCount]);
+    return userDataService.getBrandRules(activeBrand.id, isDemo).length;
+  }, [activeBrand.id, isDemo]);
 
-  const pendingCount = pendingReviews.length || (isDemoMode ? 1 : 0);
-  const totalAuditsCount = analytics?.total_audits_measured ?? (recentAudits.length > 0 ? recentAudits.length : (isDemoMode ? 142 : 0));
+  const pendingCount = isDemo ? (pendingReviews.length || 1) : 0;
+  const totalAuditsCount = isDemo 
+    ? (analytics?.total_audits_measured ?? 142) 
+    : userAudits.length;
   const hasAudits = totalAuditsCount > 0;
 
   // Pass rate score calculation
-  const passRateScore = hasAudits ? (analytics?.first_time_pass_rate ?? (isDemoMode ? 88.4 : 0)) : null;
+  const passRateScore = useMemo(() => {
+    if (!hasAudits) return null;
+    if (isDemo) return analytics?.first_time_pass_rate ?? 88.4;
+    const passed = userAudits.filter((a) => a.score >= 80).length;
+    return (passed / userAudits.length) * 100;
+  }, [hasAudits, isDemo, analytics?.first_time_pass_rate, userAudits]);
 
   // Semantic Grade determination
   const governanceGrade = useMemo(() => {
@@ -122,36 +152,58 @@ export const OverviewView: React.FC = () => {
 
   // Trend timeline data
   const trendData = useMemo(() => {
-    const rawData = analytics?.audits_over_time || [];
-    if (rawData.length === 0) {
-      if (!hasAudits) return [];
-      return [
-        { date: "Day 1", total_audits: 8, passed_audits: 7, flagged_audits: 1, avg_score: 87.5 },
-        { date: "Day 2", total_audits: 12, passed_audits: 10, flagged_audits: 2, avg_score: 83.3 },
-        { date: "Day 3", total_audits: 15, passed_audits: 14, flagged_audits: 1, avg_score: 93.3 },
-        { date: "Day 4", total_audits: 10, passed_audits: 8, flagged_audits: 2, avg_score: 80.0 },
-        { date: "Day 5", total_audits: 18, passed_audits: 16, flagged_audits: 2, avg_score: 88.8 },
-        { date: "Day 6", total_audits: 14, passed_audits: 13, flagged_audits: 1, avg_score: 92.8 },
-        { date: "Day 7", total_audits: 16, passed_audits: 15, flagged_audits: 1, avg_score: 93.7 },
-      ];
+    if (isDemo) {
+      const rawData = analytics?.audits_over_time || [];
+      if (rawData.length === 0) {
+        return [
+          { date: "Day 1", total_audits: 8, passed_audits: 7, flagged_audits: 1, avg_score: 87.5 },
+          { date: "Day 2", total_audits: 12, passed_audits: 10, flagged_audits: 2, avg_score: 83.3 },
+          { date: "Day 3", total_audits: 15, passed_audits: 14, flagged_audits: 1, avg_score: 93.3 },
+          { date: "Day 4", total_audits: 10, passed_audits: 8, flagged_audits: 2, avg_score: 80.0 },
+          { date: "Day 5", total_audits: 18, passed_audits: 16, flagged_audits: 2, avg_score: 88.8 },
+          { date: "Day 6", total_audits: 14, passed_audits: 13, flagged_audits: 1, avg_score: 92.8 },
+          { date: "Day 7", total_audits: 16, passed_audits: 15, flagged_audits: 1, avg_score: 93.7 },
+        ];
+      }
+      const daysCount = timeframe === "7d" ? 7 : timeframe === "14d" ? 14 : 30;
+      return rawData.slice(-daysCount);
     }
-    const daysCount = timeframe === "7d" ? 7 : timeframe === "14d" ? 14 : 30;
-    return rawData.slice(-daysCount);
-  }, [analytics?.audits_over_time, timeframe, hasAudits]);
+
+    if (userAudits.length === 0) return [];
+
+    return [
+      {
+        date: "Today",
+        total_audits: userAudits.length,
+        passed_audits: userAudits.filter((a) => a.score >= 80).length,
+        flagged_audits: userAudits.filter((a) => a.score < 80).length,
+        avg_score: passRateScore || 0,
+      },
+    ];
+  }, [analytics?.audits_over_time, timeframe, isDemo, userAudits, passRateScore]);
 
   const maxTotalAudits = useMemo(() => {
     return Math.max(...trendData.map((d) => d.total_audits), 10);
   }, [trendData]);
 
+  // Admin Onboarding progress
+  const onboardingStepsDone = useMemo(() => {
+    let count = 0;
+    if (goldenFactsCount > 0 || adminOnboarding.factsAdded) count++;
+    if (guardrailsCount > 0 || adminOnboarding.rulesAdded) count++;
+    if (adminOnboarding.teamInvited) count++;
+    return count;
+  }, [goldenFactsCount, guardrailsCount, adminOnboarding]);
+
   // =========================================================================
-  // VIEW A: USER (CREATOR) HOME VIEW
+  // VIEW A: CREATOR OVERVIEW (HOME FOR CONTENT CREATORS)
   // =========================================================================
   if (!isAdmin) {
     return (
       <div className="space-y-6 animate-in fade-in duration-200">
         <PageHeader
           icon={<Sparkles className="h-5 w-5 text-[var(--accent-primary)]" />}
-          title="Creator Studio & Hub"
+          title="Creator Overview"
           description={`Welcome to ${activeBrand.name}. Draft on-brand content with live factual citations and 1-click rewrites.`}
           actions={
             <Button
@@ -166,36 +218,29 @@ export const OverviewView: React.FC = () => {
           }
         />
 
-        {/* Creator Action Banner */}
-        <div className="surface-glass surface-glass-highlight p-6 rounded-2xl border border-[var(--border-default)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Badge variant="brand" size="sm">Active Workspace</Badge>
-              <span className="text-[14px] font-bold text-[var(--text-primary)]">{activeBrand.name}</span>
+        {/* First-Run Onboarding Card for New Creators */}
+        {userAudits.length === 0 && !isDemo && (
+          <div className="surface-glass surface-glass-highlight p-6 rounded-2xl border border-[var(--accent-border)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-glow">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <Badge variant="glow" size="sm">First-Run Onboarding</Badge>
+                <h3 className="text-base font-bold text-[var(--text-primary)]">Write your first draft</h3>
+              </div>
+              <p className="text-sm text-[var(--text-secondary)]">
+                Start writing in Creator Studio. Inkloom verifies claims, pricing, and tone guidelines against brand ground truth in real time.
+              </p>
             </div>
-            <p className="text-[14px] text-[var(--text-secondary)]">
-              All drafts are pre-evaluated against {goldenFactsCount} Golden Facts and {guardrailsCount} Brand Guardrails.
-            </p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <Button
-              variant="outline"
-              size="md"
-              onClick={() => setCurrentRoute("golden-facts")}
-              leftIcon={<BookOpen className="h-4 w-4" />}
-            >
-              View Golden Facts ({goldenFactsCount})
-            </Button>
             <Button
               variant="primary"
               size="md"
               onClick={() => setCurrentRoute("creator-studio")}
               leftIcon={<Edit3 className="h-4 w-4" />}
+              className="shrink-0 font-bold"
             >
-              Open Studio Canvas
+              Open Creator Studio
             </Button>
           </div>
-        </div>
+        )}
 
         {/* Creator 3-Column Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -205,7 +250,7 @@ export const OverviewView: React.FC = () => {
               <ShieldCheck className="h-4 w-4 text-emerald-400" />
             </div>
             <div className="text-[32px] font-bold text-[var(--text-primary)] tabular-nums">
-              {hasAudits ? "92.4%" : "—"}
+              {passRateScore !== null ? `${passRateScore.toFixed(1)}%` : "—"}
             </div>
             <p className="text-[13px] text-[var(--text-secondary)]">
               {hasAudits ? "Consistently passes pricing and SLA policies" : "No content audited yet"}
@@ -221,7 +266,7 @@ export const OverviewView: React.FC = () => {
               {goldenFactsCount}
             </div>
             <p className="text-[13px] text-[var(--text-secondary)]">
-              Official ground truth facts ready for copy citation
+              {goldenFactsCount > 0 ? "Official ground truth facts ready for copy citation" : "No facts added to workspace yet"}
             </p>
           </Card>
 
@@ -231,10 +276,10 @@ export const OverviewView: React.FC = () => {
               <History className="h-4 w-4 text-[var(--text-muted)]" />
             </div>
             <div className="text-[32px] font-bold text-[var(--text-primary)] tabular-nums">
-              {recentAudits.length > 0 ? recentAudits.length : (isDemoMode ? 3 : 0)}
+              {userAudits.length > 0 ? userAudits.length : (isDemo ? 3 : 0)}
             </div>
             <p className="text-[13px] text-[var(--text-secondary)]">
-              Pre-publication evaluations across LinkedIn & Blog
+              {hasAudits ? "Pre-publication evaluations completed" : "Draft evaluations will appear here"}
             </p>
           </Card>
         </div>
@@ -256,7 +301,7 @@ export const OverviewView: React.FC = () => {
             </Button>
           </CardHeader>
           <CardContent className="p-0">
-            {recentAudits.length > 0 || isDemoMode ? (
+            {isDemo ? (
               <div className="divide-y divide-[var(--border-subtle)] text-[14px]">
                 <div className="p-4 flex items-center justify-between hover:bg-[var(--bg-surface-subtle)] transition-colors">
                   <div className="space-y-1">
@@ -283,6 +328,25 @@ export const OverviewView: React.FC = () => {
                   </div>
                 </div>
               </div>
+            ) : userAudits.length > 0 ? (
+              <div className="divide-y divide-[var(--border-subtle)] text-[14px]">
+                {userAudits.slice(0, 5).map((audit) => (
+                  <div key={audit.id} className="p-4 flex items-center justify-between hover:bg-[var(--bg-surface-subtle)] transition-colors">
+                    <div className="space-y-1 max-w-[70%]">
+                      <div className="font-semibold text-[var(--text-primary)] truncate">{audit.snippet}</div>
+                      <div className="text-[13px] text-[var(--text-muted)] capitalize">{audit.channel} • {audit.timestamp}</div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <Badge variant={audit.score >= 80 ? "success" : "warning"} size="sm">
+                        {audit.score}/100
+                      </Badge>
+                      <Button variant="ghost" size="sm" onClick={() => setCurrentRoute("creator-studio")}>
+                        Open Studio
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="p-10 text-center space-y-3">
                 <p className="text-[14px] text-[var(--text-muted)]">No draft audits recorded yet.</p>
@@ -298,16 +362,14 @@ export const OverviewView: React.FC = () => {
   }
 
   // =========================================================================
-  // VIEW B: ADMIN (BRAND MANAGER) EXECUTIVE COCKPIT
+  // VIEW B: EXECUTIVE COCKPIT (ADMIN & BRAND MANAGER)
   // =========================================================================
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      {/* 1. Compact Standardized Page Header */}
       <PageHeader
         icon={<LayoutDashboard className="h-5 w-5 text-[var(--accent-primary)]" />}
         title="Executive Cockpit"
         description="Unified brand safety oversight, factual compliance metrics, and automated governance health."
-        technicalDetails="768-dimensional pgvector cosine retrieval • Deterministic CIEDE2000 OpenCV vision • SHA-256 tamper-evident verification ledger"
         actions={
           <div className="flex items-center gap-2.5">
             <Button
@@ -334,7 +396,109 @@ export const OverviewView: React.FC = () => {
         }
       />
 
-      {/* 2. Action Required Strip (Top Priority Alerts) */}
+      {/* Admin 3-Step First-Run Onboarding Checklist */}
+      {!isDemo && onboardingStepsDone < 3 && (
+        <Card className="p-6 border-[var(--accent-border)] surface-glass-highlight space-y-4 shadow-glow">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Badge variant="glow" size="sm">Admin Setup</Badge>
+                <h3 className="text-base font-bold text-[var(--text-primary)]">
+                  Brand Governance Onboarding ({onboardingStepsDone}/3 Completed)
+                </h3>
+              </div>
+              <p className="text-sm text-[var(--text-secondary)]">
+                Complete these 3 foundational steps to activate autonomous governance for your enterprise.
+              </p>
+            </div>
+            <span className="text-xs font-mono text-[var(--accent-text)] font-bold">
+              {Math.round((onboardingStepsDone / 3) * 100)}% Ready
+            </span>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="w-full bg-[var(--bg-surface-subtle)] rounded-full h-2 overflow-hidden border border-[var(--border-subtle)]">
+            <div 
+              className="bg-[var(--accent-primary)] h-full transition-all duration-500 rounded-full"
+              style={{ width: `${(onboardingStepsDone / 3) * 100}%` }}
+            />
+          </div>
+
+          {/* 3 Steps Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+            {/* Step 1 */}
+            <div 
+              onClick={() => setCurrentRoute("golden-facts")}
+              className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                goldenFactsCount > 0 
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                  : "surface-glass border-[var(--border-default)] hover:border-[var(--accent-border)]"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`h-7 w-7 rounded-lg flex items-center justify-center font-bold text-xs ${
+                  goldenFactsCount > 0 ? "bg-emerald-500/20 text-emerald-400" : "bg-[var(--bg-surface-subtle)] text-[var(--text-muted)]"
+                }`}>
+                  {goldenFactsCount > 0 ? <Check className="h-4 w-4" /> : "1"}
+                </div>
+                <div>
+                  <div className="text-[13px] font-bold text-[var(--text-primary)]">Add Golden Facts</div>
+                  <div className="text-[11px] text-[var(--text-muted)]">Verified pricing & claims ({goldenFactsCount})</div>
+                </div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-[var(--text-muted)]" />
+            </div>
+
+            {/* Step 2 */}
+            <div 
+              onClick={() => setCurrentRoute("brand-rules")}
+              className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                guardrailsCount > 0 
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                  : "surface-glass border-[var(--border-default)] hover:border-[var(--accent-border)]"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`h-7 w-7 rounded-lg flex items-center justify-center font-bold text-xs ${
+                  guardrailsCount > 0 ? "bg-emerald-500/20 text-emerald-400" : "bg-[var(--bg-surface-subtle)] text-[var(--text-muted)]"
+                }`}>
+                  {guardrailsCount > 0 ? <Check className="h-4 w-4" /> : "2"}
+                </div>
+                <div>
+                  <div className="text-[13px] font-bold text-[var(--text-primary)]">Add Guardrails</div>
+                  <div className="text-[11px] text-[var(--text-muted)]">Banned superlatives & tone ({guardrailsCount})</div>
+                </div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-[var(--text-muted)]" />
+            </div>
+
+            {/* Step 3 */}
+            <div 
+              onClick={() => setCurrentRoute("settings")}
+              className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                adminOnboarding.teamInvited 
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                  : "surface-glass border-[var(--border-default)] hover:border-[var(--accent-border)]"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`h-7 w-7 rounded-lg flex items-center justify-center font-bold text-xs ${
+                  adminOnboarding.teamInvited ? "bg-emerald-500/20 text-emerald-400" : "bg-[var(--bg-surface-subtle)] text-[var(--text-muted)]"
+                }`}>
+                  {adminOnboarding.teamInvited ? <Check className="h-4 w-4" /> : "3"}
+                </div>
+                <div>
+                  <div className="text-[13px] font-bold text-[var(--text-primary)]">Invite Team</div>
+                  <div className="text-[11px] text-[var(--text-muted)]">Add creators and reviewers</div>
+                </div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-[var(--text-muted)]" />
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Action Required Strip (Top Priority Alerts) */}
       {pendingCount > 0 && (
         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[14px] animate-in slide-in-from-top-1 duration-150">
           <div className="flex items-center gap-3">
@@ -360,15 +524,12 @@ export const OverviewView: React.FC = () => {
         </div>
       )}
 
-      {/* 3. Four Equal-Height Metric Cards (4-Col Grid) */}
+      {/* Four Equal-Height Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Card 1: Audit Accuracy */}
         <Card className="p-5 flex flex-col justify-between space-y-3">
           <div className="flex items-center justify-between text-[13px] text-[var(--text-muted)] font-medium">
-            <span>Audit Accuracy</span>
-            <div title="Empirical accuracy rate across evaluated drafts">
-              <Info className="h-3.5 w-3.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-help" />
-            </div>
+            <span>Pass Rate Accuracy</span>
+            <Info className="h-3.5 w-3.5 text-[var(--text-muted)]" />
           </div>
           <div className="space-y-1">
             <div className="text-[32px] font-bold text-[var(--text-primary)] tabular-nums leading-none">
@@ -380,49 +541,40 @@ export const OverviewView: React.FC = () => {
           </div>
         </Card>
 
-        {/* Card 2: Grounding Facts */}
         <Card className="p-5 flex flex-col justify-between space-y-3">
           <div className="flex items-center justify-between text-[13px] text-[var(--text-muted)] font-medium">
             <span>Grounding Facts</span>
-            <div title="Verified source-of-truth facts indexed for this brand">
-              <Info className="h-3.5 w-3.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-help" />
-            </div>
+            <Info className="h-3.5 w-3.5 text-[var(--text-muted)]" />
           </div>
           <div className="space-y-1">
             <div className="text-[32px] font-bold text-[var(--text-primary)] tabular-nums leading-none">
               {goldenFactsCount}
             </div>
             <p className="text-[13px] text-[var(--text-secondary)] line-clamp-1">
-              Active verified claims & SLAs
+              {goldenFactsCount > 0 ? "Active verified claims & SLAs" : "No facts added yet"}
             </p>
           </div>
         </Card>
 
-        {/* Card 3: Guardrail Rules */}
         <Card className="p-5 flex flex-col justify-between space-y-3">
           <div className="flex items-center justify-between text-[13px] text-[var(--text-muted)] font-medium">
             <span>Guardrail Rules</span>
-            <div title="Active deterministic policy rules and banned terms">
-              <Info className="h-3.5 w-3.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-help" />
-            </div>
+            <Info className="h-3.5 w-3.5 text-[var(--text-muted)]" />
           </div>
           <div className="space-y-1">
             <div className="text-[32px] font-bold text-[var(--text-primary)] tabular-nums leading-none">
               {guardrailsCount}
             </div>
             <p className="text-[13px] text-[var(--text-secondary)] line-clamp-1">
-              Enforced across all channels
+              {guardrailsCount > 0 ? "Enforced across all channels" : "No guardrails configured yet"}
             </p>
           </div>
         </Card>
 
-        {/* Card 4: Pending Reviews */}
         <Card className="p-5 flex flex-col justify-between space-y-3">
           <div className="flex items-center justify-between text-[13px] text-[var(--text-muted)] font-medium">
             <span>Pending Reviews</span>
-            <div title="Submissions awaiting human brand manager sign-off">
-              <Info className="h-3.5 w-3.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-help" />
-            </div>
+            <Info className="h-3.5 w-3.5 text-[var(--text-muted)]" />
           </div>
           <div className="space-y-1">
             <div className="text-[32px] font-bold text-[var(--text-primary)] tabular-nums leading-none">
@@ -435,47 +587,7 @@ export const OverviewView: React.FC = () => {
         </Card>
       </div>
 
-      {/* 4. Quick Action Buttons Row (Equal Heights, Baseline Aligned) */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <Button
-          variant="primary"
-          size="md"
-          onClick={() => setCurrentRoute("creator-studio")}
-          leftIcon={<Sparkles className="h-4 w-4" />}
-          className="h-10 font-bold shadow-glow"
-        >
-          Launch Creator Studio
-        </Button>
-        <Button
-          variant={pendingCount > 0 ? "secondary" : "outline"}
-          size="md"
-          onClick={() => setCurrentRoute("review-queue")}
-          leftIcon={<FileCheck2 className="h-4 w-4" />}
-          className="h-10"
-        >
-          Review Backlog ({pendingCount})
-        </Button>
-        <Button
-          variant="outline"
-          size="md"
-          onClick={() => setCurrentRoute("golden-facts")}
-          leftIcon={<BookOpen className="h-4 w-4" />}
-          className="h-10"
-        >
-          Knowledge Vault ({goldenFactsCount})
-        </Button>
-        <Button
-          variant="outline"
-          size="md"
-          onClick={() => setCurrentRoute("brand-rules")}
-          leftIcon={<Sliders className="h-4 w-4" />}
-          className="h-10"
-        >
-          Guardrails ({guardrailsCount})
-        </Button>
-      </div>
-
-      {/* 5. Governance Health Radar & Compliance Trend Grid */}
+      {/* Governance Health Radar & Compliance Trend Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Governance Health Radar Card (5 cols) */}
         <Card className="lg:col-span-5 p-6 flex flex-col justify-between">
@@ -492,7 +604,6 @@ export const OverviewView: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-5 my-4">
-            {/* Circular Gauge */}
             <div className="relative h-28 w-28 rounded-full flex items-center justify-center shrink-0">
               <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
                 <circle
@@ -575,7 +686,6 @@ export const OverviewView: React.FC = () => {
             </div>
           </div>
 
-          {/* Bar Chart Representation */}
           {trendData.length > 0 ? (
             <div className="my-4 h-36 flex items-end justify-between gap-2 pt-6">
               {trendData.map((d, idx) => {

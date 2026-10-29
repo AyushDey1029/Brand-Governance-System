@@ -69,8 +69,8 @@ export async function signUpUser({ email, password, fullName, role = 'creator' }
       email,
       fullName: fullName || email.split('@')[0],
       role,
-      workspace: 'Acme Brand v2',
-      isDemo: true
+      workspace: `${fullName || 'Enterprise'}'s Workspace`,
+      isDemo: false
     };
     localStorage.setItem('inkloom_active_user', JSON.stringify(mockUser));
     return { user: mockUser, session: null, isFallback: true };
@@ -137,9 +137,9 @@ export async function signInUser({ email, password }) {
       id: 'usr_' + Date.now().toString(36),
       email,
       fullName: email.split('@')[0],
-      role: 'creator',
-      workspace: 'Acme Brand v2',
-      isDemo: true
+      role: email.toLowerCase().includes('admin') ? 'admin' : 'creator',
+      workspace: `${email.split('@')[0]}'s Workspace`,
+      isDemo: false
     };
     localStorage.setItem('inkloom_active_user', JSON.stringify(mockUser));
     return { user: mockUser, session: null, isFallback: true };

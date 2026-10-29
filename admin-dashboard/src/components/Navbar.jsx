@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Shield, ArrowRight, User, Menu, X, LogOut } from 'lucide-react';
+import { Shield, ArrowRight, User, Menu, X, LogOut, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
 /**
  * Inkloom Top Navbar Component
- * Refactored for pixel-perfect vertical alignment, unified 72px height,
- * zero text wrapping, WCAG AA accessibility, and responsive hamburger navigation.
+ * Refactored for auth-aware session rendering:
+ * - Loading: skeleton with zero layout shift
+ * - Signed Out: "Sign In" (secondary) + "Enter Demo" (primary)
+ * - Signed In (Real): Avatar chip + "Open Workspace" (primary)
+ * - Signed In (Demo): "Sign In" (secondary) + "Back to Demo" (primary)
  */
-export default function Navbar({ onEnterDemo }) {
-  const { user, isAdmin, openLoginModal, loginAsDemo, logout } = useAuth();
+export default function Navbar({ onEnterDemo, onOpenWorkspace }) {
+  const { status, user, role, isDemo, openLoginModal, enterDemo, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('architecture');
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -28,10 +31,7 @@ export default function Navbar({ onEnterDemo }) {
   const handleLandingSignOut = async () => {
     setUserDropdownOpen(false);
     try {
-      await logout();
-      localStorage.removeItem('inkloom_active_user');
-      localStorage.removeItem('inkloom_access_token');
-      localStorage.removeItem('inkloom_refresh_token');
+      await signOut();
     } catch (_) {}
   };
 
@@ -63,7 +63,7 @@ export default function Navbar({ onEnterDemo }) {
 
   // Compute initials for user avatar
   const getInitials = (name) => {
-    if (!name) return 'SA';
+    if (!name) return 'AD';
     const parts = name.trim().split(/\s+/);
     if (parts.length >= 2) {
       return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -76,14 +76,21 @@ export default function Navbar({ onEnterDemo }) {
     setMobileMenuOpen(false);
   };
 
-  const handleCtaClick = () => {
-    if (user) {
-      onEnterDemo(isAdmin ? 'admin' : 'creator');
+  const handlePrimaryClick = () => {
+    if (status === 'signed_in') {
+      if (isDemo) {
+        if (onEnterDemo) onEnterDemo(role);
+      } else {
+        if (onOpenWorkspace) onOpenWorkspace(role);
+        else if (onEnterDemo) onEnterDemo(role);
+      }
     } else {
-      loginAsDemo('creator');
-      onEnterDemo('creator');
+      if (onEnterDemo) onEnterDemo('creator');
+      else enterDemo('creator');
     }
   };
+
+  const isAdmin = role === 'admin';
 
   return (
     <header className="inkloom-top-navbar" role="banner">
@@ -143,70 +150,129 @@ export default function Navbar({ onEnterDemo }) {
           </a>
         </nav>
 
-        {/* GROUP 3: User Chip + CTA */}
+        {/* GROUP 3: Auth-Aware Actions Group */}
         <div className="navbar-actions-group">
-          {user && !user.isDemo && user.fullName ? (
-            <div className="relative" ref={userChipRef}>
-              <div 
-                className="navbar-user-chip cursor-pointer"
-                role="button"
-                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                aria-label={`Signed in as ${user.fullName}, role: ${isAdmin ? 'Brand Administrator' : 'Content Creator'}. Click for options.`}
-                aria-expanded={userDropdownOpen}
-                tabIndex={0}
-              >
-                <div 
-                  className={`navbar-user-avatar ${isAdmin ? 'admin' : ''}`} 
-                  aria-hidden="true"
-                >
-                  {getInitials(user.fullName || user.email)}
-                </div>
-                <span className="navbar-user-name" title={user.fullName || user.email}>
-                  {user.fullName}
-                </span>
-                <span className={`navbar-user-badge ${isAdmin ? 'admin' : ''}`}>
-                  {isAdmin ? 'Brand Admin' : 'Creator'}
-                </span>
-              </div>
-
-              {userDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-[#18121f] border border-[var(--ink-nav-border)] rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
-                  <div className="px-3 py-1.5 text-xs text-white/60 border-b border-white/10 mb-1 truncate font-sans">
-                    {user.email || 'user@nexuscloud.internal'}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleLandingSignOut}
-                    className="w-full text-left px-3 py-2 text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
-                  >
-                    <LogOut size={14} />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="navbar-signin-button"
-              onClick={() => openLoginModal('creator')}
-              aria-label="Sign In to your workspace"
-            >
-              <User size={15} aria-hidden="true" />
-              <span>Sign In</span>
-            </button>
+          {/* STATE A: Loading Skeleton */}
+          {status === 'loading' && (
+            <div 
+              className="navbar-skeleton-slot" 
+              style={{
+                width: '136px',
+                height: '40px',
+                borderRadius: '12px',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)'
+              }}
+              aria-label="Loading authentication status"
+            />
           )}
 
-          {/* Primary CTA Button */}
-          <button
-            type="button"
-            className="navbar-cta-button"
-            onClick={handleCtaClick}
-            aria-label="Open Workspace"
-          >
-            <span>Open Workspace</span>
-            <ArrowRight size={16} aria-hidden="true" />
-          </button>
+          {/* STATE B: Signed In (Real User) */}
+          {status === 'signed_in' && !isDemo && user && (
+            <>
+              {/* User Avatar + Dropdown */}
+              <div className="relative" ref={userChipRef}>
+                <div 
+                  className="navbar-user-chip cursor-pointer"
+                  role="button"
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  aria-label={`Signed in as ${user.name}, role: ${isAdmin ? 'Brand Administrator' : 'Content Creator'}. Click for options.`}
+                  aria-expanded={userDropdownOpen}
+                  tabIndex={0}
+                >
+                  <div 
+                    className={`navbar-user-avatar ${isAdmin ? 'admin' : ''}`} 
+                    aria-hidden="true"
+                  >
+                    {getInitials(user.name || user.email)}
+                  </div>
+                  <span className="navbar-user-name" title={user.name || user.email}>
+                    {user.name}
+                  </span>
+                  <span className={`navbar-user-badge ${isAdmin ? 'admin' : ''}`}>
+                    {isAdmin ? 'Admin' : 'Creator'}
+                  </span>
+                </div>
+
+                {userDropdownOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-[#18121f] border border-[var(--ink-nav-border)] rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                    <div className="px-3 py-1.5 text-xs text-white/60 border-b border-white/10 mb-1 truncate font-sans">
+                      {user.email}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleLandingSignOut}
+                      className="w-full text-left px-3 py-2 text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+                    >
+                      <LogOut size={14} />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Primary CTA */}
+              <button
+                type="button"
+                className="navbar-cta-button"
+                onClick={handlePrimaryClick}
+                aria-label="Open Workspace"
+              >
+                <span>Open Workspace</span>
+                <ArrowRight size={16} aria-hidden="true" />
+              </button>
+            </>
+          )}
+
+          {/* STATE C: Signed in as Demo Session */}
+          {status === 'signed_in' && isDemo && (
+            <>
+              <button
+                type="button"
+                className="navbar-signin-button"
+                onClick={() => openLoginModal('creator')}
+                aria-label="Sign In to your workspace"
+              >
+                <User size={15} aria-hidden="true" />
+                <span>Sign In</span>
+              </button>
+
+              <button
+                type="button"
+                className="navbar-cta-button"
+                onClick={handlePrimaryClick}
+                aria-label="Back to Demo Workspace"
+              >
+                <span>Back to Demo</span>
+                <ArrowRight size={16} aria-hidden="true" />
+              </button>
+            </>
+          )}
+
+          {/* STATE D: Signed Out */}
+          {status === 'signed_out' && (
+            <>
+              <button
+                type="button"
+                className="navbar-signin-button"
+                onClick={() => openLoginModal('creator')}
+                aria-label="Sign In to your workspace"
+              >
+                <User size={15} aria-hidden="true" />
+                <span>Sign In</span>
+              </button>
+
+              <button
+                type="button"
+                className="navbar-cta-button"
+                onClick={handlePrimaryClick}
+                aria-label="Enter Demo Workspace"
+              >
+                <span>Enter Demo</span>
+                <ArrowRight size={16} aria-hidden="true" />
+              </button>
+            </>
+          )}
 
           {/* Mobile Hamburger Toggle (< 1024px) */}
           <button
@@ -260,4 +326,3 @@ export default function Navbar({ onEnterDemo }) {
     </header>
   );
 }
-

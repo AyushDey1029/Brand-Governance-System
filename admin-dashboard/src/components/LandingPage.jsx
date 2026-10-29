@@ -11,16 +11,36 @@ import LiveAuditDemo from './LiveAuditDemo';
 import ExtensionShowcase from './ExtensionShowcase';
 import ArchitectureAndWorkflows from './ArchitectureAndWorkflows';
 
-export default function LandingPage({ onEnterDemo }) {
-  const { user, isAdmin } = useAuth();
+export default function LandingPage({ onEnterDemo, onOpenWorkspace }) {
+  const { status, role, isDemo } = useAuth();
+
+  const handleBottomCtaClick = () => {
+    if (status === 'signed_in') {
+      if (isDemo) {
+        if (onEnterDemo) onEnterDemo(role);
+      } else {
+        if (onOpenWorkspace) onOpenWorkspace(role);
+        else if (onEnterDemo) onEnterDemo(role);
+      }
+    } else {
+      if (onEnterDemo) onEnterDemo('creator');
+    }
+  };
+
+  const getCtaLabel = () => {
+    if (status === 'signed_in') {
+      return isDemo ? 'Back to Demo Workspace' : 'Open Workspace';
+    }
+    return 'Enter Live Demo Workspace';
+  };
 
   return (
     <div className="landing-page-wrapper">
       {/* 1. TOP NAVBAR */}
-      <Navbar onEnterDemo={onEnterDemo} />
+      <Navbar onEnterDemo={onEnterDemo} onOpenWorkspace={onOpenWorkspace} />
 
       {/* 2. HERO SECTION */}
-      <HeroSection onEnterDemo={onEnterDemo} />
+      <HeroSection onEnterDemo={onEnterDemo} onOpenWorkspace={onOpenWorkspace} />
 
       {/* 3. INTERACTIVE LIVE INSPECTION SECTION */}
       <LiveAuditDemo />
@@ -29,7 +49,7 @@ export default function LandingPage({ onEnterDemo }) {
       <ExtensionShowcase />
 
       {/* 5. ARCHITECTURE & ROLE-AWARE WORKFLOWS */}
-      <ArchitectureAndWorkflows onEnterDemo={onEnterDemo} />
+      <ArchitectureAndWorkflows onEnterDemo={onEnterDemo} onOpenWorkspace={onOpenWorkspace} />
 
       {/* 6. BOTTOM CALL TO ACTION */}
       <section className="landing-bottom-cta-section">
@@ -45,8 +65,8 @@ export default function LandingPage({ onEnterDemo }) {
           </p>
 
           <div className="bottom-cta-buttons">
-            <button className="cta-primary-glow" onClick={onEnterDemo}>
-              <span>Enter Live Demo Workspace</span>
+            <button className="cta-primary-glow" onClick={handleBottomCtaClick}>
+              <span>{getCtaLabel()}</span>
               <ArrowRight size={16} />
             </button>
 
