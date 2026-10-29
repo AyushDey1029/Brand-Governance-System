@@ -1,17 +1,42 @@
 version: '3.8'
 
+# =============================================================================
+# Inkloom AI — Single Unified Docker Compose Deployment
+# Runs React Admin Dashboard + FastAPI Backend + Vision/RAG Engines on Port 8000
+# Usage: docker compose up -d --build
+# =============================================================================
+
 services:
-  inkloom:
+  inkloom-ai:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: inkloom-ai-platform
+    container_name: inkloom-ai-unified
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
+      # Server Networking
       - HOST=0.0.0.0
       - PORT=8000
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - ENVIRONMENT=production
-    restart: unless-stopped
 
+      # Gemini AI / RAG Engine
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-AQ.Ab8RN6KWgTxA4iE4Zw2WsZW_kZUTQ9cAs2K9TQmdGlMWCyUsZw}
+
+      # Supabase Cloud Database & Storage
+      - SUPABASE_URL=${SUPABASE_URL:-https://aucxwdwiubevbmsprlhy.supabase.co}
+      - SUPABASE_KEY=${SUPABASE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1Y3h3ZHdpdWJldmJtc3BybGh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMDkxNDIsImV4cCI6MjEwODU4NTE0Mn0.wOkcT_aMpDldU0K0JLuYzGvy4McuvwCgJ2ihVo4tXbA}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres.aucxwdwiubevbmsprlhy:A4fromhackathon@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres?sslmode=require}
+
+      # Brand Color Compliance Baselines
+      - BRAND_PRIMARY_HEX=${BRAND_PRIMARY_HEX:-#4F46E5}
+      - BRAND_SECONDARY_HEX=${BRAND_SECONDARY_HEX:-#06B6D4}
+      - COLOR_TOLERANCE=${COLOR_TOLERANCE:-35.0}
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
