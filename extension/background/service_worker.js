@@ -3,7 +3,7 @@
  * Proxies compliance evaluation requests from content scripts / popup to FastAPI backend.
  */
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = "https://brand-governance-system.vercel.app";
 
 // Handle messages from Popup and Content Scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
