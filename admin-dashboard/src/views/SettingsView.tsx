@@ -61,7 +61,7 @@ export const SettingsView: React.FC = () => {
 
   const [members, setMembers] = useState<MemberItem[]>([
     { id: "m-1", name: "David Vance", email: "david@nexuscloud.io", role: "BRAND_MANAGER", status: "Active" },
-    { id: "m-2", name: "Sarah Chen", email: "sarah.c@nexuscloud.io", role: "CONTENT_CREATOR", status: "Active" },
+    { id: "m-2", name: "Elena Rostova", email: "elena.r@nexuscloud.io", role: "CONTENT_CREATOR", status: "Active" },
     { id: "m-3", name: "Marcus Sterling", email: "m.sterling@legal.nexuscloud.io", role: "COMPLIANCE_REVIEWER", status: "Active" },
   ]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);

@@ -10,19 +10,19 @@ const AuthContext = createContext(null);
 
 const DEMO_CREATOR = {
   id: 'demo-creator-marcus',
-  email: 'marcus.vance@inkloom.internal',
-  fullName: 'Marcus Vance',
+  email: 'creator@nexuscloud.internal',
+  fullName: '',
   role: 'creator',
-  workspace: 'Acme Brand v2',
+  workspace: 'Nexus Cloud',
   isDemo: true
 };
 
 const DEMO_ADMIN = {
   id: 'demo-admin-sarah',
-  email: 'sarah.chen@inkloom.internal',
-  fullName: 'Sarah Chen',
+  email: 'admin@nexuscloud.internal',
+  fullName: '',
   role: 'admin',
-  workspace: 'Acme Brand v2',
+  workspace: 'Nexus Cloud',
   isDemo: true
 };
 
@@ -55,7 +55,7 @@ export function AuthProvider({ children }) {
             const u = data.session.user;
             let role = u.user_metadata?.role || 'creator';
             let fullName = u.user_metadata?.full_name || u.email?.split('@')[0] || 'Content Creator';
-            let workspace = u.user_metadata?.workspace || 'Acme Brand v2';
+            let workspace = u.user_metadata?.workspace || 'Nexus Cloud';
 
             try {
               const { data: dbProfile } = await client
@@ -92,7 +92,7 @@ export function AuthProvider({ children }) {
                 email: u.email,
                 fullName: u.user_metadata?.full_name || u.email?.split('@')[0] || 'Content Creator',
                 role: u.user_metadata?.role || 'creator',
-                workspace: u.user_metadata?.workspace || 'Acme Brand v2',
+                workspace: u.user_metadata?.workspace || 'Nexus Cloud',
                 isDemo: false
               };
               setUser(profile);
@@ -167,9 +167,7 @@ export function AuthProvider({ children }) {
     const updated = {
       ...user,
       role: newRole,
-      fullName: isNowAdmin 
-        ? (user.fullName === 'Marcus Vance' ? 'Sarah Chen' : user.fullName) 
-        : (user.fullName === 'Sarah Chen' ? 'Marcus Vance' : user.fullName)
+      fullName: user.isDemo ? '' : user.fullName
     };
     setUser(updated);
     localStorage.setItem('inkloom_active_user', JSON.stringify(updated));

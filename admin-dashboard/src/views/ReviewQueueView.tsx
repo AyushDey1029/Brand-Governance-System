@@ -100,7 +100,7 @@ const SEEDED_REVIEWS: MultiModalReviewItem[] = [
       {
         version: 1,
         timestamp: "Today at 10:15 AM",
-        author: "Marcus Vance",
+        author: "Content Creator",
         action: "Escalated to Review Queue",
       },
     ],
@@ -206,7 +206,7 @@ export const ReviewQueueView: React.FC = () => {
             content_version: 1,
             overall_score: 54,
             created_at: new Date().toISOString(),
-            submitted_by_id: b.author || "Marcus Vance",
+            submitted_by_id: b.author || "Content Creator",
             is_stale: false,
             image_url: b.image_url || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800",
             dominant_hex: b.dominant_hex || "#F26A0F",

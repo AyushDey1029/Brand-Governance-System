@@ -699,8 +699,8 @@ class ApiClient {
           audit_id: "audit-102",
           action: "REVIEW_APPROVED",
           resource_type: "REVIEW_DOSSIER",
-          actor_email: "sarah@inkloom.internal",
-          details: { channel: "Website / Blog", reviewer: "Sarah Chen" },
+          actor_email: "compliance@nexuscloud.internal",
+          details: { channel: "Website / Blog", reviewer: "Brand Manager" },
           timestamp: new Date(Date.now() - 86400000).toISOString(),
         },
       ];

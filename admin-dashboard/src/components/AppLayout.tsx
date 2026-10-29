@@ -278,14 +278,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, onGoHome }) => {
     }
   };
 
+  const isRealUser = Boolean(currentUser?.full_name && !isDemoMode);
+  const currentUserName = isRealUser ? currentUser!.full_name : "";
+
   const getUserInitials = (name?: string) => {
     if (!name) return isCreatorRole ? "CC" : "BM";
     const parts = name.split(" ");
     if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
     return name.slice(0, 2).toUpperCase();
   };
-
-  const currentUserName = currentUser?.full_name || (isCreatorRole ? "Marcus Vance" : "Sarah Chen");
 
   return (
     <div className="flex h-screen bg-transparent text-[var(--text-primary)] font-sans overflow-hidden transition-colors duration-300 relative">
@@ -518,16 +519,29 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, onGoHome }) => {
               >
                 {/* User Avatar */}
                 <div className="h-7 w-7 rounded-lg bg-[var(--accent-primary)] text-[var(--accent-contrast)] flex items-center justify-center font-bold text-xs shrink-0">
-                  {getUserInitials(currentUserName)}
+                  {isRealUser ? getUserInitials(currentUserName) : (isCreatorRole ? "CC" : "BM")}
                 </div>
 
                 <div className="hidden sm:block text-left truncate max-w-[130px]">
-                  <span className="text-[13px] font-semibold text-[var(--text-primary)] block truncate leading-tight">
-                    {currentUserName}
-                  </span>
-                  <span className="text-[11px] font-bold text-[var(--accent-text)] uppercase tracking-[0.04em] block truncate leading-tight">
-                    {activeRoleName}
-                  </span>
+                  {isRealUser ? (
+                    <>
+                      <span className="text-[13px] font-semibold text-[var(--text-primary)] block truncate leading-tight">
+                        {currentUserName}
+                      </span>
+                      <span className="text-[11px] font-bold text-[var(--accent-text)] uppercase tracking-[0.04em] block truncate leading-tight">
+                        {activeRoleName}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-[13px] font-semibold text-[var(--text-primary)] block truncate leading-tight">
+                        {activeRoleName}
+                      </span>
+                      <span className="text-[10px] text-[var(--text-muted)] font-mono block truncate leading-tight">
+                        Demo Mode
+                      </span>
+                    </>
+                  )}
                 </div>
 
                 <ChevronDown
@@ -544,12 +558,25 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, onGoHome }) => {
                   role="menu"
                 >
                   <div className="px-3 py-2 border-b border-[var(--border-subtle)] mb-1">
-                    <span className="text-[13px] font-bold text-[var(--text-primary)] block">
-                      {currentUserName}
-                    </span>
-                    <span className="text-[12px] text-[var(--text-muted)] block truncate">
-                      {currentUser?.email || (isCreatorRole ? "creator@inkloom.ai" : "admin@inkloom.ai")}
-                    </span>
+                    {isRealUser ? (
+                      <>
+                        <span className="text-[13px] font-bold text-[var(--text-primary)] block">
+                          {currentUserName}
+                        </span>
+                        <span className="text-[12px] text-[var(--text-muted)] block truncate">
+                          {currentUser?.email}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-[13px] font-bold text-[var(--text-primary)] block">
+                          {activeRoleName}
+                        </span>
+                        <span className="text-[11px] text-[var(--text-muted)] block">
+                          Demo Workspace
+                        </span>
+                      </>
+                    )}
                     <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-[0.04em] px-2 py-0.5 rounded-full bg-[var(--accent-subtle)] text-[var(--accent-text)] border border-[var(--accent-border)]">
                       {activeRoleName}
                     </span>
