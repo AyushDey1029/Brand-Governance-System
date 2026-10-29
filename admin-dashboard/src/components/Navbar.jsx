@@ -38,16 +38,22 @@ export default function Navbar({ onEnterDemo }) {
   // Track scroll position to update active navigation item
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPos = window.scrollY + 120;
-      const inspectionEl = document.getElementById('inspection');
+      const scrollPos = window.scrollY + 140;
       const workflowsEl = document.getElementById('workflows');
+      const architectureEl = document.getElementById('architecture');
+      const extensionEl = document.getElementById('extension');
+      const inspectionEl = document.getElementById('inspection');
 
       if (workflowsEl && scrollPos >= workflowsEl.offsetTop) {
         setActiveSection('workflows');
+      } else if (architectureEl && scrollPos >= architectureEl.offsetTop) {
+        setActiveSection('architecture');
+      } else if (extensionEl && scrollPos >= extensionEl.offsetTop) {
+        setActiveSection('extension');
       } else if (inspectionEl && scrollPos >= inspectionEl.offsetTop) {
         setActiveSection('inspection');
       } else {
-        setActiveSection('architecture');
+        setActiveSection('');
       }
     };
 
@@ -104,20 +110,28 @@ export default function Navbar({ onEnterDemo }) {
         {/* GROUP 2: Nav Links (Desktop — Centered) */}
         <nav className="navbar-center-nav" aria-label="Primary">
           <a
-            href="#architecture"
-            className={`nav-anchor-link ${activeSection === 'architecture' ? 'active' : ''}`}
-            aria-current={activeSection === 'architecture' ? 'page' : undefined}
-            onClick={(e) => handleNavClick(e, 'architecture')}
-          >
-            Architecture
-          </a>
-          <a
             href="#inspection"
             className={`nav-anchor-link ${activeSection === 'inspection' ? 'active' : ''}`}
             aria-current={activeSection === 'inspection' ? 'page' : undefined}
             onClick={(e) => handleNavClick(e, 'inspection')}
           >
             Live Inspection
+          </a>
+          <a
+            href="#extension"
+            className={`nav-anchor-link ${activeSection === 'extension' ? 'active' : ''}`}
+            aria-current={activeSection === 'extension' ? 'page' : undefined}
+            onClick={(e) => handleNavClick(e, 'extension')}
+          >
+            Extension
+          </a>
+          <a
+            href="#architecture"
+            className={`nav-anchor-link ${activeSection === 'architecture' ? 'active' : ''}`}
+            aria-current={activeSection === 'architecture' ? 'page' : undefined}
+            onClick={(e) => handleNavClick(e, 'architecture')}
+          >
+            Architecture
           </a>
           <a
             href="#workflows"
@@ -213,18 +227,25 @@ export default function Navbar({ onEnterDemo }) {
         <div className="navbar-mobile-drawer" id="mobile-navigation">
           <nav aria-label="Mobile Primary">
             <a
-              href="#architecture"
-              className={`mobile-nav-link ${activeSection === 'architecture' ? 'active' : ''}`}
-              onClick={(e) => handleNavClick(e, 'architecture')}
-            >
-              Architecture
-            </a>
-            <a
               href="#inspection"
               className={`mobile-nav-link ${activeSection === 'inspection' ? 'active' : ''}`}
               onClick={(e) => handleNavClick(e, 'inspection')}
             >
               Live Inspection
+            </a>
+            <a
+              href="#extension"
+              className={`mobile-nav-link ${activeSection === 'extension' ? 'active' : ''}`}
+              onClick={(e) => handleNavClick(e, 'extension')}
+            >
+              Extension
+            </a>
+            <a
+              href="#architecture"
+              className={`mobile-nav-link ${activeSection === 'architecture' ? 'active' : ''}`}
+              onClick={(e) => handleNavClick(e, 'architecture')}
+            >
+              Architecture
             </a>
             <a
               href="#workflows"

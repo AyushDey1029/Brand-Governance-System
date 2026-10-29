@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import Navbar from './Navbar';
 import HeroSection from './HeroSection';
 import LiveAuditDemo from './LiveAuditDemo';
+import ExtensionShowcase from './ExtensionShowcase';
 import ArchitectureAndWorkflows from './ArchitectureAndWorkflows';
 
 export default function LandingPage({ onEnterDemo }) {
@@ -24,7 +25,10 @@ export default function LandingPage({ onEnterDemo }) {
       {/* 3. INTERACTIVE LIVE INSPECTION SECTION */}
       <LiveAuditDemo />
 
-      {/* 4 & 5. ARCHITECTURE & ROLE-AWARE WORKFLOWS */}
+      {/* 4. CHROME EXTENSION SHOWCASE & INSTALLATION GUIDE */}
+      <ExtensionShowcase />
+
+      {/* 5. ARCHITECTURE & ROLE-AWARE WORKFLOWS */}
       <ArchitectureAndWorkflows onEnterDemo={onEnterDemo} />
 
       {/* 6. BOTTOM CALL TO ACTION */}

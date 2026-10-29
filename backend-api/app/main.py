@@ -73,6 +73,23 @@ if os.path.exists(DIST_DIR) and os.path.isfile(os.path.join(DIST_DIR, "index.htm
             return FileResponse(cms_path)
         return {"error": "test-cms-draft.html not found"}
 
+    @app.get("/inkloom-extension.zip")
+    @app.get("/api/download-extension")
+    async def download_extension():
+        """Serve the downloadable Chrome extension ZIP package."""
+        zip_path = os.path.join(DIST_DIR, "inkloom-extension.zip")
+        if not os.path.isfile(zip_path):
+            zip_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "..", "..", "admin-dashboard", "public", "inkloom-extension.zip")
+            )
+        if os.path.isfile(zip_path):
+            return FileResponse(
+                zip_path,
+                media_type="application/zip",
+                filename="inkloom-extension.zip"
+            )
+        return {"error": "inkloom-extension.zip not found"}
+
     @app.get("/")
     async def root():
         """Serve the React Admin Dashboard at the root URL."""
